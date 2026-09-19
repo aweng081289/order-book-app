@@ -8,8 +8,12 @@ const BINANCE_GLOBAL_SPOT_MARKETS_URL = 'https://data-api.binance.vision/api/v3/
 const BINANCE_US_SPOT_MARKETS_URL = 'https://api.binance.us/api/v3/exchangeInfo';
 const BINANCE_FUTURES_MARKETS_URL = 'https://fapi.binance.com/fapi/v1/exchangeInfo';
 
-const DEFAULT_SPOT_SYMBOLS = [
+const GLOBAL_SPOT_SYMBOLS = [
   'BTCUSDT', 'ETHBTC', 'ETHUSDT', 'XRPBTC',
+  'SOLUSDT', 'XRPUSDT', 'ADABTC', 'ADAUSDT'
+];
+const US_SPOT_SYMBOLS = [
+  'BTCUSDT', 'ETHBTC', 'ETHUSDT', 'XRPUSD',
   'SOLUSDT', 'XRPUSDT', 'ADABTC', 'ADAUSDT'
 ];
 const DEFAULT_FUTURES_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'SOLUSDT'];
@@ -61,11 +65,15 @@ export function getBinanceSpotWebSocket(region) {
   return region === 'us' ? BINANCE_US_SPOT_WS : BINANCE_GLOBAL_SPOT_WS;
 }
 
+export function getBinanceDefaultSpotSymbols(region) {
+  return region === 'us' ? [...US_SPOT_SYMBOLS] : [...GLOBAL_SPOT_SYMBOLS];
+}
+
 export async function loadBinanceMarketCatalogs(spotRegion = 'global') {
   const [spot, futures] = await Promise.all([
     loadCatalog(
       spotRegion === 'us' ? BINANCE_US_SPOT_MARKETS_URL : BINANCE_GLOBAL_SPOT_MARKETS_URL,
-      DEFAULT_SPOT_SYMBOLS,
+      getBinanceDefaultSpotSymbols(spotRegion),
       market => market.status === 'TRADING' && market.isSpotTradingAllowed !== false,
       'spot'
     ),

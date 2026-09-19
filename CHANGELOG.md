@@ -2,7 +2,19 @@
 
 This file records meaningful changes made while restoring and modernizing the project.
 
+## Project restoration context
+
+This repository restores and modernizes an earlier personal project created to monitor many cryptocurrency trading pairs in one place. The original dashboard replaced the inefficient process of checking 30 to 50 open-order markets individually in an exchange application. The restoration preserves that original purpose while improving the architecture, market-data integrations, reliability, documentation, and presentation for a professional portfolio.
+
 ## Unreleased
+
+### Region-aware Binance defaults - 2026-09-19
+
+- Verified the dashboard's Binance.US presets against the live exchange catalog.
+- Replaced suspended `XRPBTC` with active `XRPUSD` for US spot visitors while retaining `XRPBTC` on Binance Global.
+- Kept `BTCUSDT` and `ETHBTC` as the first two permanent spot markets in both regions.
+- Made the built-in fallback catalog region-specific so it does not restore the known suspended US pair when the live catalog is unavailable.
+- Changed rejected symbol feedback from "Invalid symbol" to the more accurate "Market unavailable."
 
 ### Regional Binance spot routing - 2026-09-19
 

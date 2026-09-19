@@ -2,6 +2,7 @@ import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import {
   BINANCE_FUTURES_WS,
   detectBinanceSpotRegion,
+  getBinanceDefaultSpotSymbols,
   getBinanceSpotWebSocket,
   loadBinanceMarketCatalogs,
   resolveBinanceMarket
@@ -12,10 +13,7 @@ import {
   setOrderBookSnapshot
 } from '@/services/marketData/marketBook';
 
-const SPOT_MARKETS = [
-  'BTCUSDT', 'ETHBTC', 'ETHUSDT', 'XRPBTC',
-  'SOLUSDT', 'XRPUSDT', 'ADABTC', 'ADAUSDT'
-];
+const SPOT_MARKETS = getBinanceDefaultSpotSymbols('global');
 const FUTURES_MARKETS = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'SOLUSDT'];
 const RECONNECT_DELAY = 5000;
 
@@ -137,7 +135,7 @@ export function useBinanceOrderBooks(depth) {
     if (!symbol || book.symbol === symbol.toUpperCase()) return;
     const market = resolveBinanceMarket(symbol, catalogs[type]);
     if (!market) {
-      showTemporaryError(book, 'Invalid symbol');
+      showTemporaryError(book, 'Market unavailable');
       return;
     }
 
@@ -158,6 +156,13 @@ export function useBinanceOrderBooks(depth) {
 
   async function start() {
     spotRegion.value = await detectBinanceSpotRegion();
+    const regionalSpotSymbols = getBinanceDefaultSpotSymbols(spotRegion.value);
+    spotBooks.forEach((book, index) => {
+      const symbol = regionalSpotSymbols[index];
+      if (book.symbol !== symbol) {
+        Object.assign(book, createMarketBook({ symbol, providerSymbol: symbol }));
+      }
+    });
     const loadedCatalogs = await loadBinanceMarketCatalogs(spotRegion.value);
     catalogs.spot = loadedCatalogs.spot;
     catalogs.futures = loadedCatalogs.futures;
