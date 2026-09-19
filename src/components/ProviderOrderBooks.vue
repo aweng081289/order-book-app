@@ -16,6 +16,7 @@
         v-for="(book, index) in spotBooks"
         :key="`spot-${index}`"
         :book="book"
+        :now="now"
         :permanent="index < 2"
         @change-symbol="changeSymbol(index, 'spot', $event)"
       />
@@ -35,6 +36,7 @@
         v-for="(book, index) in futuresBooks"
         :key="`futures-${index}`"
         :book="book"
+        :now="now"
         @change-symbol="changeSymbol(index, 'futures', $event)"
       />
     </div>
@@ -42,7 +44,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import OrderBookPanel from './OrderBookPanel.vue';
 import { useBinanceOrderBooks } from '@/composables/useBinanceOrderBooks';
 import { useKrakenOrderBooks } from '@/composables/useKrakenOrderBooks';
@@ -80,6 +82,17 @@ const spotVenueLabel = computed(() => {
   if (!spotRegion) return '';
   if (spotRegion.value === 'detecting') return 'Detecting region';
   return spotRegion.value === 'us' ? 'Binance.US' : 'Binance Global';
+});
+
+const now = ref(Date.now());
+let clockTimer = null;
+
+onMounted(() => {
+  clockTimer = setInterval(() => { now.value = Date.now(); }, 1000);
+});
+
+onUnmounted(() => {
+  if (clockTimer) clearInterval(clockTimer);
 });
 
 function connectionLabel(status) {

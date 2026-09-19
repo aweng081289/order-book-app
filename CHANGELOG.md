@@ -8,6 +8,13 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Live-update visibility - 2026-09-19
+
+- Added a brief green or red midpoint flash when the real best bid and ask produce a higher or lower midpoint.
+- Added a per-panel last-updated indicator so live, delayed, and inactive feeds are easier to distinguish.
+- Used one shared one-second display clock for all panels instead of creating a timer for every order book.
+- Respected reduced-motion browser preferences by disabling price-flash animation when requested.
+
 ### Region-aware Binance defaults - 2026-09-19
 
 - Verified the dashboard's Binance.US presets against the live exchange catalog.

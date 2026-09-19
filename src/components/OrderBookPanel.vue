@@ -54,7 +54,11 @@
           </tr>
           <tr v-if="book.midPrice || book.lastPrice" class="bg-gray-900/90">
             <td colspan="3" class="p-2 text-center">
-              <div class="text-base font-semibold text-green-300">
+              <div
+                :key="book.priceUpdateSequence"
+                class="mid-price text-base font-semibold text-green-300"
+                :class="book.priceDirection ? `mid-price--${book.priceDirection}` : ''"
+              >
                 {{ formatNumber(book.midPrice || book.lastPrice) }}
               </div>
               <div class="mt-1 text-[10px] text-gray-400">
@@ -62,6 +66,9 @@
                 <span v-if="book.spread !== null">
                   <span v-if="book.lastPrice"> · </span>Spread {{ formatNumber(book.spread) }} ({{ book.spreadPercent }}%)
                 </span>
+              </div>
+              <div class="mt-1 text-[10px]" :class="lastUpdatedClass">
+                {{ lastUpdatedLabel }}
               </div>
             </td>
           </tr>
@@ -80,10 +87,11 @@
 </template>
 
 <script setup>
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 
 const props = defineProps({
   book: { type: Object, required: true },
+  now: { type: Number, required: true },
   permanent: { type: Boolean, default: false }
 });
 const emit = defineEmits(['change-symbol']);
@@ -91,6 +99,26 @@ const emit = defineEmits(['change-symbol']);
 const editing = ref(false);
 const editSymbol = ref('');
 const editInput = ref(null);
+
+const updateAgeSeconds = computed(() => {
+  if (!props.book.updatedAt) return null;
+  const timestamp = typeof props.book.updatedAt === 'number'
+    ? props.book.updatedAt
+    : Date.parse(props.book.updatedAt);
+  if (!Number.isFinite(timestamp)) return null;
+  return Math.max(0, Math.floor((props.now - timestamp) / 1000));
+});
+const lastUpdatedLabel = computed(() => {
+  if (updateAgeSeconds.value === null) return 'Waiting for market data';
+  if (updateAgeSeconds.value < 2) return 'Updated now';
+  if (updateAgeSeconds.value < 60) return `Updated ${updateAgeSeconds.value}s ago`;
+  return `Updated ${Math.floor(updateAgeSeconds.value / 60)}m ago`;
+});
+const lastUpdatedClass = computed(() =>
+  updateAgeSeconds.value !== null && updateAgeSeconds.value < 5
+    ? 'text-green-400/80'
+    : 'text-gray-500'
+);
 
 function startEditing() {
   if (props.permanent) return;
@@ -130,6 +158,8 @@ function formatNumber(number) {
 
 <style scoped>
 .book-panel { transition: all 0.15s ease; }
+.mid-price--up { animation: price-up 0.55s ease-out; }
+.mid-price--down { animation: price-down 0.55s ease-out; }
 .orderbook-table-container { box-shadow: 0 4px 12px #0004; }
 input[type="text"].no-box {
   background: transparent !important; border: none !important; outline: none !important;
@@ -144,4 +174,16 @@ input[type="text"].no-box:focus { outline: none !important; box-shadow: none !im
   display: inline-block; vertical-align: middle;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes price-up {
+  0% { background-color: rgb(34 197 94 / 35%); transform: scale(1.05); }
+  100% { background-color: transparent; transform: scale(1); }
+}
+@keyframes price-down {
+  0% { background-color: rgb(248 113 113 / 35%); transform: scale(1.05); }
+  100% { background-color: transparent; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mid-price--up, .mid-price--down { animation: none; }
+}
 </style>

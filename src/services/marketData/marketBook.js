@@ -19,6 +19,8 @@ export function createMarketBook({ symbol, providerSymbol }) {
     spread: null,
     spreadPercent: null,
     priceChangePercent: null,
+    priceDirection: null,
+    priceUpdateSequence: 0,
     updatedAt: null,
     loading: true,
     error: null
@@ -65,6 +67,7 @@ function mergeLevels(currentLevels, updates, descending, retainedDepth) {
 }
 
 function finishBookUpdate(book, displayDepth) {
+  const previousMidPrice = Number(book.midPrice);
   book.displayAsks = createDisplayLevels(book.asks, false, displayDepth);
   book.displayBids = createDisplayLevels(book.bids, true, displayDepth);
 
@@ -74,6 +77,10 @@ function finishBookUpdate(book, displayDepth) {
     book.midPrice = (bestAsk + bestBid) / 2;
     book.spread = bestAsk - bestBid;
     book.spreadPercent = ((book.spread / book.midPrice) * 100).toFixed(3);
+    if (previousMidPrice && book.midPrice !== previousMidPrice) {
+      book.priceDirection = book.midPrice > previousMidPrice ? 'up' : 'down';
+      book.priceUpdateSequence += 1;
+    }
   }
   book.updatedAt = Date.now();
   book.loading = false;
