@@ -5,6 +5,12 @@ import {
   loadKrakenMarketCatalogs,
   resolveKrakenMarket
 } from '@/services/krakenMarkets';
+import {
+  applyOrderBookUpdates,
+  createMarketBook,
+  setMarketTicker,
+  setOrderBookSnapshot
+} from '@/services/marketData/marketBook';
 
 const SPOT_MARKETS = [
   ['BTCUSDT', 'BTC/USDT'], ['ETHBTC', 'ETH/BTC'], ['ETHUSDT', 'ETH/USDT'],
@@ -17,17 +23,11 @@ const FUTURES_MARKETS = [
 ];
 const RECONNECT_DELAY = 5000;
 
-function createBook([symbol, providerSymbol]) {
-  return {
-    symbol, providerSymbol, bids: [], asks: [], formattedBids: [], formattedAsks: [],
-    lastPrice: null, midPrice: null, spread: null, spreadPercent: null,
-    priceChangePercent: null, loading: true, error: null
-  };
-}
-
 export function useKrakenOrderBooks(depth) {
-  const spotBooks = reactive(SPOT_MARKETS.map(createBook));
-  const futuresBooks = reactive(FUTURES_MARKETS.map(createBook));
+  const spotBooks = reactive(SPOT_MARKETS.map(([symbol, providerSymbol]) =>
+    createMarketBook({ symbol, providerSymbol })));
+  const futuresBooks = reactive(FUTURES_MARKETS.map(([symbol, providerSymbol]) =>
+    createMarketBook({ symbol, providerSymbol })));
   const catalogs = { spot: new Map(), futures: new Map() };
   const spotConnectionStatus = ref('idle');
   const futuresConnectionStatus = ref('idle');
@@ -109,20 +109,18 @@ export function useKrakenOrderBooks(depth) {
     if (message.channel === 'book') {
       for (const book of books) {
         if (message.type === 'snapshot') {
-          book.bids = toPriceLevels(data.bids);
-          book.asks = toPriceLevels(data.asks);
+          setOrderBookSnapshot(book, { bids: data.bids, asks: data.asks }, depth);
         } else {
-          applyLevelUpdates(book, 'bids', data.bids || [], true);
-          applyLevelUpdates(book, 'asks', data.asks || [], false);
+          applyOrderBookUpdates(book, { bids: data.bids, asks: data.asks }, depth, krakenBookDepth);
         }
-        book.loading = false;
-        book.error = null;
-        updateFormattedLists(book);
       }
     } else if (message.channel === 'ticker') {
       for (const book of books) {
-        book.lastPrice = data.last;
-        book.priceChangePercent = Number(data.change_pct).toFixed(2);
+        setMarketTicker(book, {
+          lastPrice: data.last,
+          priceChangePercent: data.change_pct,
+          updatedAt: data.timestamp ? Date.parse(data.timestamp) : Date.now()
+        });
       }
     }
   }
@@ -170,61 +168,21 @@ export function useKrakenOrderBooks(depth) {
 
     if (message.feed === 'book_snapshot') {
       for (const book of books) {
-        book.bids = toPriceLevels(message.bids);
-        book.asks = toPriceLevels(message.asks);
-        book.loading = false;
-        book.error = null;
-        updateFormattedLists(book);
+        setOrderBookSnapshot(book, { bids: message.bids, asks: message.asks }, depth);
       }
     } else if (message.feed === 'book') {
       const side = message.side === 'buy' ? 'bids' : 'asks';
       for (const book of books) {
-        applyLevelUpdates(book, side, [message], side === 'bids');
-        book.loading = false;
-        updateFormattedLists(book);
+        applyOrderBookUpdates(book, { [side]: [message] }, depth, krakenBookDepth);
       }
     } else if (message.feed === 'ticker') {
       for (const book of books) {
-        book.lastPrice = message.last;
-        book.priceChangePercent = Number(message.change).toFixed(2);
+        setMarketTicker(book, {
+          lastPrice: message.last,
+          priceChangePercent: message.change,
+          updatedAt: message.time
+        });
       }
-    }
-  }
-
-  function toPriceLevels(levels = []) {
-    return levels.map(level => [String(level.price), String(level.qty)]);
-  }
-
-  function applyLevelUpdates(book, side, updates, descending) {
-    const levels = new Map(book[side].map(([price, quantity]) => [String(price), String(quantity)]));
-    for (const update of updates) {
-      const price = String(update.price);
-      if (Number(update.qty) === 0) levels.delete(price);
-      else levels.set(price, String(update.qty));
-    }
-    book[side] = [...levels.entries()]
-      .sort((a, b) => descending ? Number(b[0]) - Number(a[0]) : Number(a[0]) - Number(b[0]))
-      .slice(0, krakenBookDepth);
-  }
-
-  function updateFormattedLists(book) {
-    const asks = [...book.asks]
-      .map(([price, quantity]) => [Number(price), Number(quantity)])
-      .sort((a, b) => a[0] - b[0]).slice(0, depth);
-    const bids = [...book.bids]
-      .map(([price, quantity]) => [Number(price), Number(quantity)])
-      .sort((a, b) => b[0] - a[0]).slice(0, depth);
-    let askTotal = 0;
-    let bidTotal = 0;
-    book.formattedAsks = asks.map(level => [level[0], level[1], askTotal += level[1]]);
-    book.formattedBids = bids.map(level => [level[0], level[1], bidTotal += level[1]]);
-
-    const bestAsk = book.formattedAsks[0]?.[0];
-    const bestBid = book.formattedBids[0]?.[0];
-    if (bestAsk && bestBid) {
-      book.midPrice = (bestAsk + bestBid) / 2;
-      book.spread = bestAsk - bestBid;
-      book.spreadPercent = ((book.spread / book.midPrice) * 100).toFixed(3);
     }
   }
 
@@ -237,7 +195,10 @@ export function useKrakenOrderBooks(depth) {
       showTemporaryError(book, 'Invalid symbol');
       return;
     }
-    Object.assign(book, createBook([market.displaySymbol, market.providerSymbol]));
+    Object.assign(book, createMarketBook({
+      symbol: market.displaySymbol,
+      providerSymbol: market.providerSymbol
+    }));
     if (type === 'spot') connectSpot(true);
     else connectFutures(true);
   }

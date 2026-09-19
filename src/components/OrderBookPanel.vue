@@ -47,10 +47,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ask, index) in [...book.formattedAsks].reverse()" :key="`ask-${ask[0]}-${index}`">
-            <td class="p-2 text-right font-bold text-red-400">{{ formatNumber(ask[0]) }}</td>
-            <td class="p-2 text-right">{{ formatNumber(ask[1]) }}</td>
-            <td class="p-2 text-right">{{ formatNumber(ask[2]) }}</td>
+          <tr v-for="(ask, index) in [...book.displayAsks].reverse()" :key="`ask-${ask.price}-${index}`">
+            <td class="p-2 text-right font-bold text-red-400">{{ formatNumber(ask.price) }}</td>
+            <td class="p-2 text-right">{{ formatNumber(ask.quantity) }}</td>
+            <td class="p-2 text-right">{{ formatNumber(ask.total) }}</td>
           </tr>
           <tr v-if="book.midPrice || book.lastPrice" class="bg-gray-900/90">
             <td colspan="3" class="p-2 text-center">
@@ -65,10 +65,10 @@
               </div>
             </td>
           </tr>
-          <tr v-for="(bid, index) in book.formattedBids" :key="`bid-${bid[0]}-${index}`">
-            <td class="p-2 text-right font-bold text-green-400">{{ formatNumber(bid[0]) }}</td>
-            <td class="p-2 text-right">{{ formatNumber(bid[1]) }}</td>
-            <td class="p-2 text-right">{{ formatNumber(bid[2]) }}</td>
+          <tr v-for="(bid, index) in book.displayBids" :key="`bid-${bid.price}-${index}`">
+            <td class="p-2 text-right font-bold text-green-400">{{ formatNumber(bid.price) }}</td>
+            <td class="p-2 text-right">{{ formatNumber(bid.quantity) }}</td>
+            <td class="p-2 text-right">{{ formatNumber(bid.total) }}</td>
           </tr>
         </tbody>
       </table>

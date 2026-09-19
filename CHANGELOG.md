@@ -4,6 +4,14 @@ This file records meaningful changes made while restoring and modernizing the pr
 
 ## Unreleased
 
+### Normalized market-data model — 2026-09-19
+
+- Added an application-owned market-book model shared independently of any exchange payload format.
+- Standardized price levels as `{ price, quantity }` objects and displayed levels with cumulative totals.
+- Centralized snapshot replacement, incremental level updates, ticker updates, midpoint, spread, timestamps, and loading state.
+- Refactored Kraken message handling to translate its native spot and futures payloads into the shared model.
+- Updated `OrderBookPanel.vue` to render only normalized application data, preparing it for a Binance adapter without provider-specific UI branches.
+
 ### Order-book architecture refactor — 2026-09-19
 
 - Reduced `OrderBook.vue` to section layout, connection badges, and market coordination.
