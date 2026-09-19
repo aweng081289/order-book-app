@@ -4,6 +4,42 @@ This file records meaningful changes made while restoring and modernizing the pr
 
 ## Unreleased
 
+### Order-book architecture refactor — 2026-09-19
+
+- Reduced `OrderBook.vue` to section layout, connection badges, and market coordination.
+- Extracted the repeated market panel, editing controls, table, formatting, and loading UI into `OrderBookPanel.vue`.
+- Extracted Kraken market state, WebSocket lifecycle, order-book processing, reconnection, and symbol changes into `useKrakenOrderBooks.js`.
+- Added provider configuration that records Binance as the preferred future default while retaining Kraken as the runtime fallback until a Binance adapter exists.
+- Removed the visible “Mid” label while retaining the responsive midpoint value, last traded price, and spread.
+- Did not add Binance endpoints or an exchange selector during this refactor.
+
+### Market selection and live price summary — 2026-09-19
+
+- Made the Kraken spot and futures catalogs load independently so one failed request no longer disables all market selection.
+- Added built-in fallback mappings for the dashboard's default spot and futures markets.
+- Preserved support for compact market input such as `ETHUSDT` and Kraken-style input such as `ETH/USDT`.
+- Replaced the single center price with a live summary containing the bid-ask midpoint, last traded price, and current spread.
+- Calculated the midpoint and spread from every visible order-book update so the center responds to bid and ask movement even when no new trade occurs.
+- Fixed duplicate market panels so selecting a market already displayed elsewhere updates every matching panel instead of leaving the new panel stuck on “Connecting.”
+
+### Kraken market-data migration — 2026-09-19
+
+Replaced the original global Binance market-data integration with Kraken's public APIs.
+
+- Added a Kraken market service that loads the current spot-pair and futures-instrument catalogs.
+- Replaced Binance spot streams with Kraken WebSocket v2 `book` and `ticker` subscriptions.
+- Replaced Binance futures streams with Kraken Futures `book` and `ticker` subscriptions.
+- Added local processing for Kraken order-book snapshots and incremental updates.
+- Added symbol normalization so users can enter compact symbols such as `BTCUSDT` while Kraken receives its native `XBT/USDT` symbol.
+- Kept all market-data calls public and unauthenticated; no Kraken account or API key is required.
+
+The migration preserves the original dashboard behavior:
+
+- `BTCUSDT` and `ETHBTC` remain the two permanent spot markets, backed by Kraken WebSocket v2's `BTC/USDT` and `ETH/BTC` symbols.
+- The remaining spot panels continue to support user-selected markets.
+- Spot and futures data remain separate sections.
+- Futures panels now use Kraken's USD-quoted perpetual markets and are labeled `BTCUSD`, `ETHUSD`, `XRPUSD`, and `SOLUSD` accordingly.
+
 ### Market monitor stabilization — 2026-09-19
 
 Changed `src/components/OrderBook.vue` to improve the reliability of the existing Binance-based dashboard:
@@ -25,39 +61,3 @@ Validation completed:
 - Git whitespace checks passed.
 
 No dependencies were installed or removed, and no Git configuration was changed.
-
-### Market selection and live price summary — 2026-09-19
-
-- Made the Kraken spot and futures catalogs load independently so one failed request no longer disables all market selection.
-- Added built-in fallback mappings for the dashboard's default spot and futures markets.
-- Preserved support for compact market input such as `ETHUSDT` and Kraken-style input such as `ETH/USDT`.
-- Replaced the single center price with a live summary containing the bid-ask midpoint, last traded price, and current spread.
-- Calculated the midpoint and spread from every visible order-book update so the center responds to bid and ask movement even when no new trade occurs.
-- Fixed duplicate market panels so selecting a market already displayed elsewhere updates every matching panel instead of leaving the new panel stuck on “Connecting.”
-
-### Order-book architecture refactor — 2026-09-19
-
-- Reduced `OrderBook.vue` to section layout, connection badges, and market coordination.
-- Extracted the repeated market panel, editing controls, table, formatting, and loading UI into `OrderBookPanel.vue`.
-- Extracted Kraken market state, WebSocket lifecycle, order-book processing, reconnection, and symbol changes into `useKrakenOrderBooks.js`.
-- Added provider configuration that records Binance as the preferred future default while retaining Kraken as the runtime fallback until a Binance adapter exists.
-- Removed the visible “Mid” label while retaining the responsive midpoint value, last traded price, and spread.
-- Did not add Binance endpoints or an exchange selector during this refactor.
-
-### Kraken market-data migration — 2026-09-19
-
-Replaced the original global Binance market-data integration with Kraken's public APIs.
-
-- Added a Kraken market service that loads the current spot-pair and futures-instrument catalogs.
-- Replaced Binance spot streams with Kraken WebSocket v2 `book` and `ticker` subscriptions.
-- Replaced Binance futures streams with Kraken Futures `book` and `ticker` subscriptions.
-- Added local processing for Kraken order-book snapshots and incremental updates.
-- Added symbol normalization so users can enter compact symbols such as `BTCUSDT` while Kraken receives its native `XBT/USDT` symbol.
-- Kept all market-data calls public and unauthenticated; no Kraken account or API key is required.
-
-The migration preserves the original dashboard behavior:
-
-- `BTCUSDT` and `ETHBTC` remain the two permanent spot markets, backed by Kraken WebSocket v2's `BTC/USDT` and `ETH/BTC` symbols.
-- The remaining spot panels continue to support user-selected markets.
-- Spot and futures data remain separate sections.
-- Futures panels now use Kraken's USD-quoted perpetual markets and are labeled `BTCUSD`, `ETHUSD`, `XRPUSD`, and `SOLUSD` accordingly.
