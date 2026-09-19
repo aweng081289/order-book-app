@@ -1,0 +1,43 @@
+@import './base.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Unrestrict the root/app wrapper */
+#app {
+    @apply w-full min-h-screen font-normal;
+}
+
+/* Global body styles */
+body {
+    @apply bg-gradient-to-br from-indigo-900 to-purple-800 text-white min-h-screen;
+}
+
+/* Table/theme styles unchanged */
+table {
+    @apply border-collapse w-full;
+}
+
+th,
+td {
+    @apply border border-gray-600 p-2 text-right;
+}
+
+.hover\:bg-gray-700:hover {
+    @apply bg-gray-700;
+}
+
+/* Optional: link styles */
+a,
+.green {
+    @apply no-underline text-green-600 transition duration-300 p-1;
+}
+
+@media (hover: hover) {
+    a:hover {
+        @apply bg-green-300 bg-opacity-20;
+    }
+}
+
+/* REMOVE any #app grid/grid-cols-2/centering from old media queries! */
