@@ -1,44 +1,45 @@
 <template>
   <div>
-    <div class="mb-4 flex items-center justify-between gap-3">
-      <h2 class="text-xl font-bold text-indigo-400">Spot Markets</h2>
-      <span class="connection-status" :class="`connection-status--${spotConnectionStatus}`">
-        {{ connectionLabel(spotConnectionStatus) }}
-      </span>
-    </div>
-    <div class="grid h-full w-full grid-cols-1 gap-4 mb-10 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
-      <OrderBookPanel
-        v-for="(book, index) in spotBooks"
-        :key="`spot-${index}`"
-        :book="book"
-        :permanent="index < 2"
-        @change-symbol="changeSymbol(index, 'spot', $event)"
-      />
+    <div class="mb-6 flex justify-end">
+      <div
+        class="inline-flex rounded-lg border border-indigo-400/40 bg-gray-900/70 p-1"
+        role="group"
+        aria-label="Market-data provider"
+      >
+        <button
+          v-for="provider in AVAILABLE_PROVIDERS"
+          :key="provider"
+          type="button"
+          class="rounded-md px-4 py-2 text-sm font-semibold capitalize transition-colors"
+          :class="selectedProvider === provider
+            ? 'bg-indigo-500 text-white shadow'
+            : 'text-gray-300 hover:bg-gray-700 hover:text-white'"
+          :aria-pressed="selectedProvider === provider"
+          @click="selectProvider(provider)"
+        >
+          {{ provider }}
+        </button>
+      </div>
     </div>
 
-    <div class="mb-4 flex items-center justify-between gap-3">
-      <h2 class="text-xl font-bold text-indigo-400">Futures Markets</h2>
-      <span class="connection-status" :class="`connection-status--${futuresConnectionStatus}`">
-        {{ connectionLabel(futuresConnectionStatus) }}
-      </span>
-    </div>
-    <div class="grid h-full w-full grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
-      <OrderBookPanel
-        v-for="(book, index) in futuresBooks"
-        :key="`futures-${index}`"
-        :book="book"
-        @change-symbol="changeSymbol(index, 'futures', $event)"
-      />
-    </div>
+    <ProviderOrderBooks
+      :key="selectedProvider"
+      :provider="selectedProvider"
+      :depth="depth"
+    />
   </div>
 </template>
 
 <script setup>
-import OrderBookPanel from './OrderBookPanel.vue';
-import { useKrakenOrderBooks } from '@/composables/useKrakenOrderBooks';
-import { PREFERRED_PROVIDER, resolveProvider } from '@/services/marketData/providerConfig';
+import { ref } from 'vue';
+import ProviderOrderBooks from './ProviderOrderBooks.vue';
+import {
+  AVAILABLE_PROVIDERS,
+  PREFERRED_PROVIDER,
+  resolveProvider
+} from '@/services/marketData/providerConfig';
 
-const props = defineProps({
+defineProps({
   depth: {
     type: Number,
     default: 5,
@@ -46,37 +47,13 @@ const props = defineProps({
   }
 });
 
-// Binance is the preferred provider. Kraken remains the runtime fallback until
-// the Binance adapter and exchange selector are implemented.
-const runtimeProvider = resolveProvider(PREFERRED_PROVIDER);
-if (runtimeProvider !== 'kraken') throw new Error(`Unsupported runtime provider: ${runtimeProvider}`);
+const STORAGE_KEY = 'market-data-provider';
+const savedProvider = window.localStorage.getItem(STORAGE_KEY);
+const selectedProvider = ref(resolveProvider(savedProvider || PREFERRED_PROVIDER));
 
-const {
-  spotBooks,
-  futuresBooks,
-  spotConnectionStatus,
-  futuresConnectionStatus,
-  changeSymbol
-} = useKrakenOrderBooks(props.depth);
-
-function connectionLabel(status) {
-  return {
-    idle: 'Not connected',
-    connecting: 'Connecting',
-    connected: 'Live',
-    reconnecting: 'Reconnecting',
-    error: 'Connection issue'
-  }[status] || 'Not connected';
+function selectProvider(provider) {
+  if (provider === selectedProvider.value) return;
+  selectedProvider.value = resolveProvider(provider);
+  window.localStorage.setItem(STORAGE_KEY, selectedProvider.value);
 }
 </script>
-
-<style scoped>
-.connection-status {
-  border: 1px solid currentColor; border-radius: 9999px; padding: 0.15rem 0.55rem;
-  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
-}
-.connection-status--connected { color: #4ade80; }
-.connection-status--connecting, .connection-status--reconnecting { color: #facc15; }
-.connection-status--error { color: #f87171; }
-.connection-status--idle { color: #9ca3af; }
-</style>

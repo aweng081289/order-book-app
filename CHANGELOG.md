@@ -4,6 +4,32 @@ This file records meaningful changes made while restoring and modernizing the pr
 
 ## Unreleased
 
+### Regional Binance spot routing - 2026-09-19
+
+- Added a Vercel serverless region endpoint using the deployment's `x-vercel-ip-country` request header; no paid geolocation service or API key is required.
+- Routed US visitors to Binance.US for spot catalogs and WebSocket market data, while other visitors use Binance Global spot.
+- Kept all Binance futures market data on Binance Global as originally planned.
+- Added visible venue labels beside the spot and futures section headings.
+- Made local development default to Binance.US because Vercel geolocation headers are only available after deployment.
+
+### Exchange selector - 2026-09-19
+
+- Added a visible Binance/Kraken market-data selector above the dashboard.
+- Kept Binance as the default provider and saved each visitor's manual selection in browser storage.
+- Provider changes now unmount the old feed before starting the new one, closing its spot and futures WebSockets instead of leaving background subscriptions active.
+- Kept provider-specific symbols and connection states isolated while preserving the shared order-book interface.
+
+### Binance Global market-data adapter - 2026-09-19
+
+- Added Binance Global public spot and USD-M perpetual-futures market adapters using the shared market-data model.
+- Made Binance the default runtime provider while retaining the Kraken adapter for the planned exchange selector.
+- Added 100 ms partial order-book streams and 24-hour ticker streams for faster visible market updates.
+- Added live subscribe and unsubscribe handling so changing a panel does not reconnect its entire WebSocket.
+- Kept one spot socket and one futures socket per visitor, with unique stream subscriptions shared by duplicate panels.
+- Added independent spot and futures market catalogs with built-in defaults when a catalog request is unavailable.
+- Kept the first two spot panels, `BTCUSDT` and `ETHBTC`, permanent.
+- No Binance.US routing, geographic detection, or exchange selector was added in this step.
+
 ### Normalized market-data model — 2026-09-19
 
 - Added an application-owned market-book model shared independently of any exchange payload format.

@@ -230,5 +230,12 @@ export function useKrakenOrderBooks(depth) {
   onMounted(start);
   onUnmounted(stop);
 
-  return { spotBooks, futuresBooks, spotConnectionStatus, futuresConnectionStatus, changeSymbol };
+  return {
+    spotBooks,
+    futuresBooks,
+    spotConnectionStatus,
+    futuresConnectionStatus,
+    spotRegion: null,
+    changeSymbol
+  };
 }
