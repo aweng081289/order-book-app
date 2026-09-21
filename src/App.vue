@@ -16,7 +16,7 @@
       </nav>
     </header>
 
-    <main class="h-full w-full flex-1 bg-transparent p-0 md:p-6">
+    <main class="h-full w-full flex-1 bg-transparent p-3 sm:p-4 md:p-6">
       <OrderBook :depth="5" />
     </main>
   </div>
@@ -30,31 +30,30 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onUnmounted, ref, watch } from 'vue';
 import OrderBook from './components/OrderBook.vue';
 import ProjectOverlay from './components/ProjectOverlay.vue';
 
 const activeOverlay = ref('about');
+let overlayTrigger = null;
 
 function openOverlay(view) {
+  if (!activeOverlay.value) overlayTrigger = document.activeElement;
   activeOverlay.value = view;
 }
 
 function closeOverlay() {
   activeOverlay.value = null;
-}
-
-function handleKeydown(event) {
-  if (event.key === 'Escape' && activeOverlay.value) closeOverlay();
+  const focusTarget = overlayTrigger;
+  overlayTrigger = null;
+  nextTick(() => focusTarget?.focus());
 }
 
 watch(activeOverlay, value => {
   document.body.style.overflow = value ? 'hidden' : '';
 }, { immediate: true });
 
-onMounted(() => window.addEventListener('keydown', handleKeydown));
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
   document.body.style.overflow = '';
 });
 </script>
@@ -62,12 +61,16 @@ onUnmounted(() => {
 <style scoped>
 .logo { box-shadow: 0 4px 6px rgb(0 0 0 / 10%); }
 .nav-link {
+  align-items: center;
   border-radius: 0.375rem;
   color: #c7d2fe;
+  display: inline-flex;
   font-size: 0.75rem;
   font-weight: 600;
+  min-height: 2.75rem;
   padding: 0.4rem 0.55rem;
   transition: background-color 150ms, color 150ms;
 }
 .nav-link:hover { background-color: rgb(55 65 81 / 80%); color: white; }
+.nav-link:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
 </style>

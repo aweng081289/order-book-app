@@ -20,7 +20,7 @@
       <div v-else class="relative mb-1 flex min-h-7 items-baseline justify-center gap-2">
         <button
           type="button"
-          class="group inline-flex items-baseline gap-1.5 uppercase tracking-wide"
+          class="group inline-flex min-h-11 items-center gap-1.5 rounded-md uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
           :class="permanent ? 'cursor-default text-indigo-400' : 'cursor-pointer text-indigo-300 hover:text-indigo-200'"
           :disabled="permanent"
           :aria-label="permanent ? `${book.symbol}, fixed market` : `Change ${book.symbol} market`"
@@ -29,7 +29,7 @@
           <span class="text-xl font-bold">{{ book.symbol }}</span>
           <span
             class="text-[10px] font-medium lowercase tracking-normal"
-            :class="permanent ? 'text-gray-500' : 'text-indigo-400 group-hover:text-indigo-300'"
+            :class="permanent ? 'text-gray-400' : 'text-indigo-400 group-hover:text-indigo-300'"
           >
             {{ permanent ? 'fixed' : 'change' }}
           </span>
@@ -41,7 +41,7 @@
         >
           {{ book.priceChangePercent > 0 ? '+' : '' }}{{ book.priceChangePercent }}%
         </span>
-        <span v-if="book.error" class="absolute right-0 top-0 block text-xs text-red-400">
+        <span v-if="book.error" class="absolute right-0 top-0 block text-xs text-red-400" role="alert">
           {{ book.error }}
         </span>
       </div>
@@ -49,15 +49,20 @@
 
     <div class="orderbook-table-container w-full max-w-xs rounded-lg bg-gray-900/80 p-1 pb-2 shadow">
       <table class="w-full border-collapse text-xs">
+        <caption class="sr-only">{{ book.symbol }} live order book</caption>
         <thead>
           <tr>
-            <th class="p-2 text-right text-gray-400">Price</th>
-            <th class="p-2 text-right text-gray-400">Amount</th>
-            <th class="p-2 text-right text-gray-400">Total</th>
+            <th scope="col" class="p-2 text-right text-gray-400">Price</th>
+            <th scope="col" class="p-2 text-right text-gray-400">Amount</th>
+            <th scope="col" class="p-2 text-right text-gray-400">Total</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ask, index) in [...book.displayAsks].reverse()" :key="`ask-${ask.price}-${index}`">
+          <tr
+            v-for="(ask, index) in [...book.displayAsks].reverse()"
+            :key="`ask-${ask.price}-${index}`"
+            :aria-label="`Ask price ${formatNumber(ask.price)}, amount ${formatNumber(ask.quantity)}`"
+          >
             <td class="p-2 text-right font-bold text-red-400">{{ formatNumber(ask.price) }}</td>
             <td class="p-2 text-right">{{ formatNumber(ask.quantity) }}</td>
             <td class="p-2 text-right">{{ formatNumber(ask.total) }}</td>
@@ -82,14 +87,18 @@
               </div>
             </td>
           </tr>
-          <tr v-for="(bid, index) in book.displayBids" :key="`bid-${bid.price}-${index}`">
+          <tr
+            v-for="(bid, index) in book.displayBids"
+            :key="`bid-${bid.price}-${index}`"
+            :aria-label="`Bid price ${formatNumber(bid.price)}, amount ${formatNumber(bid.quantity)}`"
+          >
             <td class="p-2 text-right font-bold text-green-400">{{ formatNumber(bid.price) }}</td>
             <td class="p-2 text-right">{{ formatNumber(bid.quantity) }}</td>
             <td class="p-2 text-right">{{ formatNumber(bid.total) }}</td>
           </tr>
         </tbody>
       </table>
-      <div v-if="book.loading" class="py-6 text-center text-indigo-400">
+      <div v-if="book.loading" class="py-6 text-center text-indigo-400" role="status" aria-live="polite">
         <span class="loading-spinner inline-block"></span> Connecting...
       </div>
     </div>
@@ -127,7 +136,7 @@ const lastUpdatedLabel = computed(() => {
 const lastUpdatedClass = computed(() =>
   updateAgeSeconds.value !== null && updateAgeSeconds.value < 5
     ? 'text-green-400/80'
-    : 'text-gray-500'
+    : 'text-gray-400'
 );
 
 function startEditing() {

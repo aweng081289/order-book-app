@@ -8,6 +8,16 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Responsive and accessibility improvements - 2026-09-21
+
+- Added keyboard focus containment, Escape dismissal, and trigger-focus restoration for the project overlay.
+- Added visible focus indicators and minimum touch-target heights to navigation, provider, market, retry, fallback, and dialog controls.
+- Added polite screen-reader announcements for spot and futures connection states and loading states.
+- Added accessible order-book captions, column scopes, and explicit bid/ask row descriptions.
+- Added alert semantics for unavailable markets while retaining visible text rather than relying on color alone.
+- Added mobile page spacing and global reduced-motion support.
+- Added automated tests for overlay Escape handling and focus wrapping.
+
 ### Continuous integration - 2026-09-21
 
 - Added a GitHub Actions workflow for pushes and pull requests targeting `main`.

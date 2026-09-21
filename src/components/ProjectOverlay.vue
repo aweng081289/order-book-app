@@ -3,8 +3,10 @@
     class="fixed inset-0 z-50 overflow-y-auto bg-gray-950/80 p-4 backdrop-blur-sm sm:p-8"
     role="presentation"
     @click.self="close"
+    @keydown="handleKeydown"
   >
     <section
+      ref="dialogPanel"
       class="mx-auto my-4 w-full max-w-4xl overflow-hidden rounded-2xl border border-indigo-300/20 bg-gray-900 shadow-2xl shadow-black/60 sm:my-10"
       role="dialog"
       aria-modal="true"
@@ -16,7 +18,7 @@
             v-for="item in views"
             :key="item.id"
             type="button"
-            class="rounded-md px-3 py-2 text-sm font-semibold transition-colors"
+            class="min-h-11 rounded-md px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
             :class="view === item.id ? 'bg-indigo-500 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'"
             @click="emit('change-view', item.id)"
           >
@@ -26,7 +28,7 @@
         <button
           ref="closeButton"
           type="button"
-          class="rounded-md px-3 py-2 text-xl leading-none text-gray-400 hover:bg-gray-800 hover:text-white"
+          class="min-h-11 min-w-11 rounded-md px-3 py-2 text-xl leading-none text-gray-400 hover:bg-gray-800 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
           aria-label="Close project information"
           @click="close"
         >
@@ -72,12 +74,12 @@
         <div class="mt-10 flex flex-wrap items-center gap-4">
           <button
             type="button"
-            class="rounded-lg bg-green-500 px-5 py-3 font-bold text-gray-950 transition-colors hover:bg-green-400"
+            class="min-h-11 rounded-lg bg-green-500 px-5 py-3 font-bold text-gray-950 transition-colors hover:bg-green-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-200"
             @click="close"
           >
             Enter Dashboard
           </button>
-          <p class="text-sm text-gray-500">Public market data only. No trading or account access.</p>
+          <p class="text-sm text-gray-400">Public market data only. No trading or account access.</p>
         </div>
       </div>
 
@@ -92,7 +94,7 @@
           <li v-for="entry in changelog" :key="entry.title" class="rounded-xl border border-gray-700 bg-gray-800/60 p-5">
             <div class="flex flex-wrap items-baseline justify-between gap-2">
               <h2 class="font-bold text-indigo-200">{{ entry.title }}</h2>
-              <time class="text-xs text-gray-500">{{ entry.date }}</time>
+              <time class="text-xs text-gray-400">{{ entry.date }}</time>
             </div>
             <p class="mt-2 text-sm leading-6 text-gray-400">{{ entry.summary }}</p>
           </li>
@@ -100,7 +102,7 @@
 
         <button
           type="button"
-          class="mt-8 rounded-lg bg-indigo-500 px-5 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
+          class="mt-8 min-h-11 rounded-lg bg-indigo-500 px-5 py-3 font-bold text-white transition-colors hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
           @click="close"
         >
           Back to Dashboard
@@ -122,6 +124,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'change-view']);
 const closeButton = ref(null);
+const dialogPanel = ref(null);
 const views = [
   { id: 'about', label: 'About' },
   { id: 'changelog', label: 'Changelog' }
@@ -151,6 +154,29 @@ const changelog = [
 
 function close() {
   emit('close');
+}
+
+function handleKeydown(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    close();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+
+  const focusable = [...dialogPanel.value.querySelectorAll(
+    'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )];
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 watch(() => props.view, () => nextTick(() => closeButton.value?.focus()));

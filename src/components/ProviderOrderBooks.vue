@@ -12,7 +12,7 @@
       <div class="flex shrink-0 gap-2">
         <button
           type="button"
-          class="rounded-md border border-red-300/50 px-3 py-2 font-semibold hover:bg-red-900/50"
+          class="min-h-11 rounded-md border border-red-300/50 px-3 py-2 font-semibold hover:bg-red-900/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200"
           @click="retryConnections"
         >
           Retry
@@ -20,7 +20,7 @@
         <button
           v-if="provider === 'binance'"
           type="button"
-          class="rounded-md bg-indigo-500 px-3 py-2 font-semibold text-white hover:bg-indigo-400"
+          class="min-h-11 rounded-md bg-indigo-500 px-3 py-2 font-semibold text-white hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-200"
           @click="emit('select-provider', 'kraken')"
         >
           Switch to Kraken
@@ -35,7 +35,13 @@
           {{ spotVenueLabel }}
         </span>
       </div>
-      <span class="connection-status" :class="`connection-status--${spotConnectionStatus}`">
+      <span
+        class="connection-status"
+        :class="`connection-status--${spotConnectionStatus}`"
+        role="status"
+        aria-live="polite"
+        :aria-label="`Spot market connection: ${connectionLabel(spotConnectionStatus)}`"
+      >
         {{ connectionLabel(spotConnectionStatus) }}
       </span>
     </div>
@@ -55,7 +61,13 @@
         <h2 class="text-xl font-bold text-indigo-400">Futures Markets</h2>
         <span v-if="provider === 'binance'" class="text-xs text-gray-400">Binance Global</span>
       </div>
-      <span class="connection-status" :class="`connection-status--${futuresConnectionStatus}`">
+      <span
+        class="connection-status"
+        :class="`connection-status--${futuresConnectionStatus}`"
+        role="status"
+        aria-live="polite"
+        :aria-label="`Futures market connection: ${connectionLabel(futuresConnectionStatus)}`"
+      >
         {{ connectionLabel(futuresConnectionStatus) }}
       </span>
     </div>

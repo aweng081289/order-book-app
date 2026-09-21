@@ -10,7 +10,7 @@
           v-for="provider in AVAILABLE_PROVIDERS"
           :key="provider"
           type="button"
-          class="rounded-md px-4 py-2 text-sm font-semibold capitalize transition-colors"
+          class="min-h-11 rounded-md px-4 py-2 text-sm font-semibold capitalize transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
           :class="selectedProvider === provider
             ? 'bg-indigo-500 text-white shadow'
             : 'text-gray-300 hover:bg-gray-700 hover:text-white'"
