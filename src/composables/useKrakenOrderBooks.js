@@ -22,6 +22,8 @@ const FUTURES_MARKETS = [
   ['XRPUSD', 'PF_XRPUSD'], ['SOLUSD', 'PF_SOLUSD']
 ];
 const RECONNECT_DELAY = 5000;
+const CONNECTION_TIMEOUT = 10000;
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 export function useKrakenOrderBooks(depth) {
   const spotBooks = reactive(SPOT_MARKETS.map(([symbol, providerSymbol]) =>
@@ -37,7 +39,13 @@ export function useKrakenOrderBooks(depth) {
   let futuresSocket = null;
   let spotReconnectTimer = null;
   let futuresReconnectTimer = null;
+  const connectionTimers = { spot: null, futures: null };
+  const failureCounts = { spot: 0, futures: 0 };
   let stopping = false;
+
+  function statusFor(type) {
+    return type === 'spot' ? spotConnectionStatus : futuresConnectionStatus;
+  }
 
   function clearReconnectTimer(type) {
     const timer = type === 'spot' ? spotReconnectTimer : futuresReconnectTimer;
@@ -49,12 +57,21 @@ export function useKrakenOrderBooks(depth) {
   function scheduleReconnect(type) {
     if (stopping) return;
     clearReconnectTimer(type);
-    const status = type === 'spot' ? spotConnectionStatus : futuresConnectionStatus;
-    status.value = 'reconnecting';
+    failureCounts[type] += 1;
+    if (failureCounts[type] >= MAX_RECONNECT_ATTEMPTS) {
+      statusFor(type).value = 'error';
+      return;
+    }
+    statusFor(type).value = 'reconnecting';
     const reconnect = type === 'spot' ? connectSpot : connectFutures;
     const timer = setTimeout(reconnect, RECONNECT_DELAY);
     if (type === 'spot') spotReconnectTimer = timer;
     else futuresReconnectTimer = timer;
+  }
+
+  function clearConnectionTimer(type) {
+    if (connectionTimers[type]) clearTimeout(connectionTimers[type]);
+    connectionTimers[type] = null;
   }
 
   function connectSpot(force = false) {
@@ -65,12 +82,19 @@ export function useKrakenOrderBooks(depth) {
       spotSocket.close();
     }
     clearReconnectTimer('spot');
+    clearConnectionTimer('spot');
     spotConnectionStatus.value = 'connecting';
     const symbols = [...new Set(spotBooks.map(book => book.providerSymbol))];
     const socket = new WebSocket(KRAKEN_SPOT_WS);
     spotSocket = socket;
+    connectionTimers.spot = setTimeout(() => {
+      if (spotSocket !== socket || socket.readyState === WebSocket.OPEN) return;
+      socket.close();
+    }, CONNECTION_TIMEOUT);
 
     socket.onopen = () => {
+      clearConnectionTimer('spot');
+      failureCounts.spot = 0;
       spotConnectionStatus.value = 'connected';
       socket.send(JSON.stringify({
         method: 'subscribe',
@@ -83,11 +107,11 @@ export function useKrakenOrderBooks(depth) {
     };
     socket.onmessage = event => handleSpotMessage(event.data);
     socket.onerror = error => {
-      spotConnectionStatus.value = 'error';
       console.error('Kraken spot WebSocket error:', error);
     };
     socket.onclose = () => {
       if (spotSocket !== socket) return;
+      clearConnectionTimer('spot');
       spotSocket = null;
       scheduleReconnect('spot');
     };
@@ -133,23 +157,30 @@ export function useKrakenOrderBooks(depth) {
       futuresSocket.close();
     }
     clearReconnectTimer('futures');
+    clearConnectionTimer('futures');
     futuresConnectionStatus.value = 'connecting';
     const productIds = [...new Set(futuresBooks.map(book => book.providerSymbol))];
     const socket = new WebSocket(KRAKEN_FUTURES_WS);
     futuresSocket = socket;
+    connectionTimers.futures = setTimeout(() => {
+      if (futuresSocket !== socket || socket.readyState === WebSocket.OPEN) return;
+      socket.close();
+    }, CONNECTION_TIMEOUT);
 
     socket.onopen = () => {
+      clearConnectionTimer('futures');
+      failureCounts.futures = 0;
       futuresConnectionStatus.value = 'connected';
       socket.send(JSON.stringify({ event: 'subscribe', feed: 'book', product_ids: productIds }));
       socket.send(JSON.stringify({ event: 'subscribe', feed: 'ticker', product_ids: productIds }));
     };
     socket.onmessage = event => handleFuturesMessage(event.data);
     socket.onerror = error => {
-      futuresConnectionStatus.value = 'error';
       console.error('Kraken futures WebSocket error:', error);
     };
     socket.onclose = () => {
       if (futuresSocket !== socket) return;
+      clearConnectionTimer('futures');
       futuresSocket = null;
       scheduleReconnect('futures');
     };
@@ -192,7 +223,7 @@ export function useKrakenOrderBooks(depth) {
     if (!symbol || book.symbol === symbol) return;
     const market = resolveKrakenMarket(symbol, catalogs[type]);
     if (!market) {
-      showTemporaryError(book, 'Invalid symbol');
+      showTemporaryError(book, 'Market unavailable');
       return;
     }
     Object.assign(book, createMarketBook({
@@ -209,6 +240,7 @@ export function useKrakenOrderBooks(depth) {
   }
 
   async function start() {
+    stopping = false;
     const loadedCatalogs = await loadKrakenMarketCatalogs();
     catalogs.spot = loadedCatalogs.spot;
     catalogs.futures = loadedCatalogs.futures;
@@ -216,10 +248,24 @@ export function useKrakenOrderBooks(depth) {
     connectFutures();
   }
 
+  function retryConnections() {
+    stopping = false;
+    for (const type of ['spot', 'futures']) {
+      if (statusFor(type).value === 'connected') continue;
+      failureCounts[type] = 0;
+      clearReconnectTimer(type);
+      clearConnectionTimer(type);
+      if (type === 'spot') connectSpot(true);
+      else connectFutures(true);
+    }
+  }
+
   function stop() {
     stopping = true;
     clearReconnectTimer('spot');
     clearReconnectTimer('futures');
+    clearConnectionTimer('spot');
+    clearConnectionTimer('futures');
     for (const socket of [spotSocket, futuresSocket]) {
       if (!socket) continue;
       socket.onclose = null;
@@ -236,6 +282,7 @@ export function useKrakenOrderBooks(depth) {
     spotConnectionStatus,
     futuresConnectionStatus,
     spotRegion: null,
+    retryConnections,
     changeSymbol
   };
 }

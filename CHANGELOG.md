@@ -8,6 +8,16 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Connection recovery and provider fallback - 2026-09-21
+
+- Added a ten-second timeout for spot and futures WebSocket connection attempts.
+- Added eight-second REST catalog timeouts so startup falls back to built-in markets instead of waiting indefinitely.
+- Limited automatic retries to three consecutive failures so unavailable providers no longer reconnect forever.
+- Added a clear provider-level failure banner that distinguishes connection failures from unavailable market symbols.
+- Added manual retry without requiring a page reload.
+- Added a one-click Kraken alternative when Binance cannot connect; the application never changes providers without the visitor's action.
+- Kept the visitor's chosen provider stored in the browser after a manual fallback.
+
 ### Live-update visibility - 2026-09-19
 
 - Added a brief green or red midpoint flash when the real best bid and ask produce a higher or lower midpoint.

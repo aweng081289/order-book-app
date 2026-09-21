@@ -26,6 +26,7 @@
       :key="selectedProvider"
       :provider="selectedProvider"
       :depth="depth"
+      @select-provider="selectProvider"
     />
   </div>
 </template>

@@ -45,8 +45,8 @@ function createFallbackCatalogs() {
 export async function loadKrakenMarketCatalogs() {
   const catalogs = createFallbackCatalogs();
   const [spotResult, futuresResult] = await Promise.allSettled([
-    axios.get(KRAKEN_SPOT_PAIRS_URL),
-    axios.get(KRAKEN_FUTURES_INSTRUMENTS_URL)
+    axios.get(KRAKEN_SPOT_PAIRS_URL, { timeout: 8000 }),
+    axios.get(KRAKEN_FUTURES_INSTRUMENTS_URL, { timeout: 8000 })
   ]);
 
   if (spotResult.status === 'fulfilled') {

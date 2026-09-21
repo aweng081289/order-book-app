@@ -1,5 +1,33 @@
 <template>
   <div>
+    <div
+      v-if="connectionIssue"
+      class="mb-6 flex flex-col gap-3 rounded-lg border border-red-400/50 bg-red-950/40 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between"
+      role="alert"
+    >
+      <div>
+        <p class="font-semibold">Market-data connection failed</p>
+        <p class="mt-1 text-red-200/80">{{ connectionIssue }}</p>
+      </div>
+      <div class="flex shrink-0 gap-2">
+        <button
+          type="button"
+          class="rounded-md border border-red-300/50 px-3 py-2 font-semibold hover:bg-red-900/50"
+          @click="retryConnections"
+        >
+          Retry
+        </button>
+        <button
+          v-if="provider === 'binance'"
+          type="button"
+          class="rounded-md bg-indigo-500 px-3 py-2 font-semibold text-white hover:bg-indigo-400"
+          @click="emit('select-provider', 'kraken')"
+        >
+          Switch to Kraken
+        </button>
+      </div>
+    </div>
+
     <div class="mb-4 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
         <h2 class="text-xl font-bold text-indigo-400">Spot Markets</h2>
@@ -62,6 +90,7 @@ const props = defineProps({
     validator: value => [5, 10, 20].includes(value)
   }
 });
+const emit = defineEmits(['select-provider']);
 
 const providerAdapters = {
   binance: useBinanceOrderBooks,
@@ -75,8 +104,20 @@ const {
   spotConnectionStatus,
   futuresConnectionStatus,
   spotRegion,
+  retryConnections,
   changeSymbol
 } = useOrderBooks(props.depth);
+
+const connectionIssue = computed(() => {
+  const failedFeeds = [];
+  if (spotConnectionStatus.value === 'error') failedFeeds.push('spot');
+  if (futuresConnectionStatus.value === 'error') failedFeeds.push('futures');
+  if (!failedFeeds.length) return '';
+
+  const providerName = props.provider === 'binance' ? 'Binance' : 'Kraken';
+  const feeds = failedFeeds.length === 2 ? 'spot and futures feeds' : `${failedFeeds[0]} feed`;
+  return `${providerName} ${feeds} could not connect after several attempts. You can retry without reloading the page.`;
+});
 
 const spotVenueLabel = computed(() => {
   if (!spotRegion) return '';

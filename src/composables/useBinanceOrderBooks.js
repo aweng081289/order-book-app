@@ -16,6 +16,8 @@ import {
 const SPOT_MARKETS = getBinanceDefaultSpotSymbols('global');
 const FUTURES_MARKETS = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'SOLUSDT'];
 const RECONNECT_DELAY = 5000;
+const CONNECTION_TIMEOUT = 10000;
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 function createBooks(symbols) {
   return reactive(symbols.map(symbol => createMarketBook({ symbol, providerSymbol: symbol })));
@@ -32,6 +34,8 @@ export function useBinanceOrderBooks(depth) {
 
   const sockets = { spot: null, futures: null };
   const reconnectTimers = { spot: null, futures: null };
+  const connectionTimers = { spot: null, futures: null };
+  const failureCounts = { spot: 0, futures: 0 };
   let requestId = 0;
   let stopping = false;
 
@@ -61,9 +65,19 @@ export function useBinanceOrderBooks(depth) {
     reconnectTimers[type] = null;
   }
 
+  function clearConnectionTimer(type) {
+    if (connectionTimers[type]) clearTimeout(connectionTimers[type]);
+    connectionTimers[type] = null;
+  }
+
   function scheduleReconnect(type) {
     if (stopping) return;
     clearReconnectTimer(type);
+    failureCounts[type] += 1;
+    if (failureCounts[type] >= MAX_RECONNECT_ATTEMPTS) {
+      statusFor(type).value = 'error';
+      return;
+    }
     statusFor(type).value = 'reconnecting';
     reconnectTimers[type] = setTimeout(() => connect(type), RECONNECT_DELAY);
   }
@@ -74,25 +88,32 @@ export function useBinanceOrderBooks(depth) {
     if (existing && [WebSocket.OPEN, WebSocket.CONNECTING].includes(existing.readyState)) return;
 
     clearReconnectTimer(type);
+    clearConnectionTimer(type);
     statusFor(type).value = 'connecting';
     const socket = new WebSocket(
       type === 'spot' ? getBinanceSpotWebSocket(spotRegion.value) : BINANCE_FUTURES_WS
     );
     sockets[type] = socket;
+    connectionTimers[type] = setTimeout(() => {
+      if (sockets[type] !== socket || socket.readyState === WebSocket.OPEN) return;
+      socket.close();
+    }, CONNECTION_TIMEOUT);
 
     socket.onopen = () => {
       if (sockets[type] !== socket) return;
+      clearConnectionTimer(type);
+      failureCounts[type] = 0;
       statusFor(type).value = 'connected';
       sendSubscription(type, 'SUBSCRIBE', streamsFor(booksFor(type)));
     };
     socket.onmessage = event => handleMessage(type, event.data);
     socket.onerror = error => {
       if (sockets[type] !== socket) return;
-      statusFor(type).value = 'error';
       console.error(`Binance ${type} WebSocket error:`, error);
     };
     socket.onclose = () => {
       if (sockets[type] !== socket) return;
+      clearConnectionTimer(type);
       sockets[type] = null;
       scheduleReconnect(type);
     };
@@ -155,6 +176,7 @@ export function useBinanceOrderBooks(depth) {
   }
 
   async function start() {
+    stopping = false;
     spotRegion.value = await detectBinanceSpotRegion();
     const regionalSpotSymbols = getBinanceDefaultSpotSymbols(spotRegion.value);
     spotBooks.forEach((book, index) => {
@@ -170,10 +192,28 @@ export function useBinanceOrderBooks(depth) {
     connect('futures');
   }
 
+  function retryConnections() {
+    stopping = false;
+    for (const type of ['spot', 'futures']) {
+      if (statusFor(type).value === 'connected') continue;
+      failureCounts[type] = 0;
+      clearReconnectTimer(type);
+      clearConnectionTimer(type);
+      const socket = sockets[type];
+      if (socket) {
+        socket.onclose = null;
+        socket.close();
+        sockets[type] = null;
+      }
+      connect(type);
+    }
+  }
+
   function stop() {
     stopping = true;
     for (const type of ['spot', 'futures']) {
       clearReconnectTimer(type);
+      clearConnectionTimer(type);
       const socket = sockets[type];
       if (!socket) continue;
       socket.onclose = null;
@@ -191,6 +231,7 @@ export function useBinanceOrderBooks(depth) {
     spotConnectionStatus,
     futuresConnectionStatus,
     spotRegion,
+    retryConnections,
     changeSymbol
   };
 }

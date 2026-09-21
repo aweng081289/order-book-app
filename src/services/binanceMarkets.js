@@ -36,7 +36,7 @@ function createFallbackCatalog(symbols) {
 async function loadCatalog(url, fallbackSymbols, marketFilter, label) {
   const catalog = createFallbackCatalog(fallbackSymbols);
   try {
-    const response = await axios.get(url);
+    const response = await axios.get(url, { timeout: 8000 });
     for (const market of response.data.symbols || []) {
       if (marketFilter(market)) addMarket(catalog, market.symbol);
     }
