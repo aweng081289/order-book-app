@@ -8,6 +8,8 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+## 1.0.0 - 2026-09-21
+
 ### Production deployment verification - 2026-09-21
 
 - Deployed the restored application from the GitHub `main` branch to Vercel.
