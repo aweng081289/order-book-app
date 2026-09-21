@@ -8,6 +8,13 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Repository documentation - 2026-09-21
+
+- Added a professional README grounded in the current repository implementation.
+- Documented the project's operational origin, feature set, technology, architecture, and market-data flow.
+- Documented Binance, Binance.US, Binance Global futures, Kraken, regional routing, and connection recovery behavior.
+- Added local setup, command, Vercel deployment, limitation, and roadmap guidance.
+
 ### Market-selection affordance - 2026-09-21
 
 - Added small `change` labels beside editable market symbols while preserving compact input such as `XRPUSD`.
