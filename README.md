@@ -151,6 +151,7 @@ npm run preview  # Preview the production build locally
 npm test         # Run the automated test suite once
 npm run test:watch # Run tests continuously during development
 npm run lint     # Run ESLint with automatic fixes
+npm run lint:check # Run ESLint without modifying files
 npm run format   # Format source files with Prettier
 ```
 
@@ -168,6 +169,16 @@ The deterministic test suite does not connect to live exchange APIs or WebSocket
 - Default provider selection, manual switching, and browser persistence.
 
 Run the suite with `npm test`.
+
+## Continuous integration
+
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs for pushes and pull requests targeting `main`. It uses Node.js 22 and the committed npm lockfile to:
+
+1. Install dependencies with `npm ci`.
+2. Run the automated test suite.
+3. Run ESLint without modifying files.
+4. Create a production build.
+5. Audit production dependencies.
 
 ## Deployment
 
@@ -197,12 +208,10 @@ After deployment, verify that `/api/region` returns the expected country code an
 - Binance Global futures availability depends on the visitor's network even when Binance.US spot is selected.
 - Update frequency reflects real exchange activity; quieter markets may move less often.
 - The market layout and selected editable symbols are not yet persisted between sessions.
-- Continuous integration has not yet been added.
 
 ## Roadmap
 
 - Expand automated coverage to WebSocket connection state transitions and recovery behavior.
-- Add continuous integration for lint, tests, and production builds.
 - Complete responsive, keyboard, and screen-reader testing.
 - Perform production verification of Vercel regional routing and provider behavior.
 

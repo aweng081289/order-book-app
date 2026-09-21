@@ -8,6 +8,15 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Continuous integration - 2026-09-21
+
+- Added a GitHub Actions workflow for pushes and pull requests targeting `main`.
+- Configured Node.js 22 with npm dependency caching and reproducible `npm ci` installation.
+- Added automated tests, non-mutating lint checks, production builds, and production dependency audits to CI.
+- Added a ten-minute job timeout, read-only repository permissions, and cancellation of superseded runs.
+- Added `npm run lint:check` for local and CI validation without changing source files.
+- Documented the workflow and removed continuous integration from the remaining roadmap.
+
 ### Dependency cleanup and security remediation - 2026-09-21
 
 - Removed unused runtime dependencies: Fuse.js, Lodash, Lodash ES, and Vue Draggable Next.
