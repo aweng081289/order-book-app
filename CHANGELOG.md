@@ -8,6 +8,14 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Production deployment verification - 2026-09-21
+
+- Deployed the restored application from the GitHub `main` branch to Vercel.
+- Added the production URL, `https://order-book-app-gnu1.vercel.app/`, to the project README.
+- Verified successful responses for the application shell, production JavaScript, and production CSS assets.
+- Verified the Vercel `/api/region` function returns JSON and detected the verification request as US traffic.
+- Confirmed the deployed bundle contains the current About story, Binance.US routing, Kraken integration, provider fallback, and region-aware XRP market.
+
 ### Responsive and accessibility improvements - 2026-09-21
 
 - Added keyboard focus containment, Escape dismissal, and trigger-focus restoration for the project overlay.

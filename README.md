@@ -2,6 +2,8 @@
 
 A real-time cryptocurrency market-monitoring dashboard for viewing multiple spot and futures order books in one place.
 
+**Live application:** [order-book-app-gnu1.vercel.app](https://order-book-app-gnu1.vercel.app/)
+
 ## Why this project exists
 
 This dashboard was created to solve a specific operational gap I encountered in previous work. Before it existed, I used the Binance application and opened the small bid-and-ask window for each trading pair individually just to monitor price changes. With 30 to 50 open orders across spot and futures markets, repeating that process for every pair was slow and inefficient.
@@ -191,6 +193,8 @@ The application is designed for Vercel:
 5. Deploy without exchange API secrets.
 
 After deployment, verify that `/api/region` returns the expected country code and that the interface labels the selected Binance spot venue correctly.
+
+The current production deployment is available at [order-book-app-gnu1.vercel.app](https://order-book-app-gnu1.vercel.app/). Its Vite application, production assets, and `/api/region` function were verified after deployment on September 21, 2026.
 
 ## Reliability behavior
 
