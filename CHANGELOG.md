@@ -8,6 +8,21 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Market-selection affordance - 2026-09-21
+
+- Added small `change` labels beside editable market symbols while preserving compact input such as `XRPUSD`.
+- Added small `fixed` labels beside the permanent `BTCUSDT` and `ETHBTC` panels.
+- Converted editable market headings into accessible buttons without adding distracting animation or large controls.
+- Moved the About and Changelog navigation from the top-left to the top-right header area.
+
+### Portfolio introduction overlay - 2026-09-21
+
+- Added About and Changelog links to the top-left application header.
+- Added an initial floating About screen that explains the dashboard's real operational purpose and restoration as a portfolio project.
+- Dimmed and disabled the live dashboard while project information is open.
+- Added a user-facing restoration timeline and navigation between About, Changelog, and the dashboard.
+- Added keyboard dismissal, initial dialog focus, responsive layout, and reduced background scrolling for the overlay.
+
 ### Connection recovery and provider fallback - 2026-09-21
 
 - Added a ten-second timeout for spot and futures WebSocket connection attempts.

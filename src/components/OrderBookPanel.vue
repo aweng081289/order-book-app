@@ -17,16 +17,26 @@
         @blur="saveSymbol"
         @keyup.escape="cancelEditing"
       />
-      <h3
-        v-else
-        class="relative mb-1 text-xl font-bold uppercase tracking-wide"
-        :class="permanent ? 'text-indigo-400' : 'cursor-pointer text-indigo-300'"
-        @click="startEditing"
-      >
-        {{ book.symbol }}
+      <div v-else class="relative mb-1 flex min-h-7 items-baseline justify-center gap-2">
+        <button
+          type="button"
+          class="group inline-flex items-baseline gap-1.5 uppercase tracking-wide"
+          :class="permanent ? 'cursor-default text-indigo-400' : 'cursor-pointer text-indigo-300 hover:text-indigo-200'"
+          :disabled="permanent"
+          :aria-label="permanent ? `${book.symbol}, fixed market` : `Change ${book.symbol} market`"
+          @click="startEditing"
+        >
+          <span class="text-xl font-bold">{{ book.symbol }}</span>
+          <span
+            class="text-[10px] font-medium lowercase tracking-normal"
+            :class="permanent ? 'text-gray-500' : 'text-indigo-400 group-hover:text-indigo-300'"
+          >
+            {{ permanent ? 'fixed' : 'change' }}
+          </span>
+        </button>
         <span
           v-if="book.priceChangePercent !== null"
-          class="ml-2 text-sm font-normal"
+          class="text-sm font-normal"
           :class="{ 'text-green-400': book.priceChangePercent > 0, 'text-red-400': book.priceChangePercent < 0 }"
         >
           {{ book.priceChangePercent > 0 ? '+' : '' }}{{ book.priceChangePercent }}%
@@ -34,7 +44,7 @@
         <span v-if="book.error" class="absolute right-0 top-0 block text-xs text-red-400">
           {{ book.error }}
         </span>
-      </h3>
+      </div>
     </div>
 
     <div class="orderbook-table-container w-full max-w-xs rounded-lg bg-gray-900/80 p-1 pb-2 shadow">
