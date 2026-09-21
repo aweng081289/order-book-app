@@ -19,5 +19,9 @@ export default defineConfig({
         hmr: false,  // Disabled as before
         port: 5173,
     },
+    test: {
+        environment: 'jsdom',
+        restoreMocks: true,
+    },
     logLevel: 'info',  // Increased logging for debugging updates
 });

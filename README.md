@@ -32,6 +32,7 @@ The application uses public market data only. It does not connect to an exchange
 - Axios for public REST market catalogs
 - Native browser WebSockets for live market data
 - ESLint and Prettier
+- Vitest, Vue Test Utils, and jsdom
 - Vercel serverless function for deployment-provided country detection
 
 No state-management library, backend database, authentication system, or exchange API key is required.
@@ -147,11 +148,26 @@ Open the local address printed by Vite, normally `http://localhost:5173`.
 npm run dev      # Start the Vite development server
 npm run build    # Create a production build
 npm run preview  # Preview the production build locally
+npm test         # Run the automated test suite once
+npm run test:watch # Run tests continuously during development
 npm run lint     # Run ESLint with automatic fixes
 npm run format   # Format source files with Prettier
 ```
 
 No `.env` file or exchange credentials are currently required.
+
+## Testing
+
+The deterministic test suite does not connect to live exchange APIs or WebSockets. It currently covers:
+
+- Normalized snapshots, incremental updates, cumulative totals, midpoint, spread, and price direction.
+- Binance regional defaults, endpoint selection, and symbol resolution.
+- Kraken compact-symbol and BTC/XBT alias resolution.
+- Editable and fixed market behavior.
+- Compact symbol entry and update-age display.
+- Default provider selection, manual switching, and browser persistence.
+
+Run the suite with `npm test`.
 
 ## Deployment
 
@@ -181,12 +197,11 @@ After deployment, verify that `/api/region` returns the expected country code an
 - Binance Global futures availability depends on the visitor's network even when Binance.US spot is selected.
 - Update frequency reflects real exchange activity; quieter markets may move less often.
 - The market layout and selected editable symbols are not yet persisted between sessions.
-- Automated tests and continuous integration have not yet been added.
+- Continuous integration has not yet been added.
 
 ## Roadmap
 
-- Add unit tests for market normalization, symbol resolution, and connection state transitions.
-- Add component tests for provider switching and market editing.
+- Expand automated coverage to WebSocket connection state transitions and recovery behavior.
 - Add continuous integration for lint, tests, and production builds.
 - Review and remove unused recovered dependencies and starter files.
 - Complete responsive, keyboard, and screen-reader testing.

@@ -8,6 +8,15 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Automated test foundation - 2026-09-21
+
+- Added Vitest, Vue Test Utils, and jsdom as development-only test tooling.
+- Added deterministic tests for normalized snapshots, incremental updates, totals, midpoint, spread, direction, and ticker data.
+- Added tests for Binance regional defaults, WebSocket routing, symbol resolution, and Kraken BTC/XBT aliases.
+- Added component tests for editable and fixed market labels, compact market input, update-age display, provider defaults, switching, and browser persistence.
+- Added `npm test` for one-time test runs and `npm run test:watch` for development.
+- Kept tests isolated from live exchange APIs and WebSockets.
+
 ### Repository documentation - 2026-09-21
 
 - Added a professional README grounded in the current repository implementation.
