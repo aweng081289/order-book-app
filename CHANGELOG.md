@@ -8,6 +8,16 @@ This repository restores and modernizes an earlier personal project created to m
 
 ## Unreleased
 
+### Dependency cleanup and security remediation - 2026-09-21
+
+- Removed unused runtime dependencies: Fuse.js, Lodash, Lodash ES, and Vue Draggable Next.
+- Removed the unused Vue devtools Vite plugin and its incompatible transitive inspection plugin.
+- Removed unreachable recovered Pinia store files and unused Vue starter icon components.
+- Upgraded Axios, PostCSS, Vite 7, and the Vue Vite plugin to patched compatible releases without major framework migrations.
+- Applied reviewed non-forced transitive security updates after inspecting the audit report.
+- Reduced the direct runtime dependency list to Vue and Axios.
+- Verified both the complete npm audit and production-only audit with zero reported vulnerabilities.
+
 ### Automated test foundation - 2026-09-21
 
 - Added Vitest, Vue Test Utils, and jsdom as development-only test tooling.

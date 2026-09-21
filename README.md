@@ -203,7 +203,6 @@ After deployment, verify that `/api/region` returns the expected country code an
 
 - Expand automated coverage to WebSocket connection state transitions and recovery behavior.
 - Add continuous integration for lint, tests, and production builds.
-- Review and remove unused recovered dependencies and starter files.
 - Complete responsive, keyboard, and screen-reader testing.
 - Perform production verification of Vercel regional routing and provider behavior.
 
