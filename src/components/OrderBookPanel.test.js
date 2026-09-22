@@ -24,15 +24,16 @@ describe('OrderBookPanel', () => {
     expect(wrapper.emitted('change-symbol')).toEqual([['SOLUSDT']]);
   });
 
-  it('marks permanent markets as fixed and prevents editing', async () => {
+  it('marks permanent markets as fixed while allowing details to open', async () => {
     const wrapper = mount(OrderBookPanel, {
       props: { book: createBook('BTCUSDT'), now: Date.now(), permanent: true }
     });
 
-    const fixedButton = wrapper.get('button[aria-label="BTCUSDT, fixed market"]');
-    expect(fixedButton.attributes()).toHaveProperty('disabled');
-    expect(fixedButton.text()).toContain('fixed');
-    await fixedButton.trigger('click');
+    const detailsButton = wrapper.get('button[aria-label="View BTCUSDT market details"]');
+    expect(wrapper.text()).toContain('fixed');
+    expect(wrapper.find('button[aria-label="Change BTCUSDT market"]').exists()).toBe(false);
+    await detailsButton.trigger('click');
+    expect(wrapper.emitted('view-market')).toHaveLength(1);
     expect(wrapper.find('input[aria-label="Market symbol"]').exists()).toBe(false);
   });
 

@@ -24,6 +24,7 @@ The application uses public market data only. It does not connect to an exchange
 - Region-aware default markets, including `XRPUSD` in place of suspended `XRPBTC` on Binance.US.
 - Live midpoint direction feedback and per-panel data-age indicators.
 - Bounded reconnection, connection timeouts, manual retry, and a user-controlled Kraken fallback.
+- Clickable markets with a floating detail window containing candlesticks, market metrics, crypto news, and an AI-generated market brief.
 - Responsive portfolio introduction and restoration changelog overlay.
 
 ## Technology
@@ -35,7 +36,7 @@ The application uses public market data only. It does not connect to an exchange
 - Native browser WebSockets for live market data
 - ESLint and Prettier
 - Vitest, Vue Test Utils, and jsdom
-- Vercel serverless function for deployment-provided country detection
+- Vercel serverless functions for country detection, Marketaux crypto news, and Gemini market insights
 
 No state-management library, backend database, authentication system, or exchange API key is required.
 
@@ -76,12 +77,16 @@ Provider-specific payloads do not flow directly into the display components. Eac
 | `src/components/OrderBook.vue` | Provider selection and persistence |
 | `src/components/ProviderOrderBooks.vue` | Spot/futures sections, provider errors, retry, and fallback controls |
 | `src/components/OrderBookPanel.vue` | Individual market display and inline market editing |
+| `src/components/MarketDetailsModal.vue` | Floating candle chart, market metrics, news, and AI brief |
+| `src/services/marketDetails.js` | Historical candles, market-detail metrics, news, and insight requests |
 | `src/composables/useBinanceOrderBooks.js` | Binance sockets, subscriptions, reconnection, and symbol changes |
 | `src/composables/useKrakenOrderBooks.js` | Kraken sockets, subscriptions, reconnection, and symbol changes |
 | `src/services/marketData/marketBook.js` | Provider-neutral market-book normalization and calculations |
 | `src/services/binanceMarkets.js` | Binance endpoints, regional defaults, catalogs, and symbol resolution |
 | `src/services/krakenMarkets.js` | Kraken endpoints, catalogs, aliases, and symbol resolution |
 | `api/region.js` | Vercel country-header endpoint used for Binance spot routing |
+| `api/market-news.js` | Server-side Marketaux news proxy |
+| `api/market-insights.js` | Server-side Gemini market briefs |
 | `CHANGELOG.md` | Detailed, newest-first restoration record |
 
 ## Market-data flow
@@ -157,7 +162,19 @@ npm run lint:check # Run ESLint without modifying files
 npm run format   # Format source files with Prettier
 ```
 
-No `.env` file or exchange credentials are currently required.
+### Optional market news and AI brief
+
+Copy `.env.example` to `.env.local`, then add your server-side Marketaux and Gemini keys:
+
+```dotenv
+MARKETAUX_API_KEY=your_marketaux_key
+GEMINI_API_KEY=your_gemini_key
+GEMINI_MODEL=gemini-3.8-flash
+```
+
+These values are used only by the local API middleware and serverless functions; do not expose them with Vite's `VITE_` prefix or commit `.env.local`.
+
+The brief uses only Gemini (GEMINI_MODEL defaults to gemini-3.8-flash). Gemini 3 models use low thinking effort with room for reasoning and the final structured response. Temporary service errors, rate limits, network errors, and timeouts are retried once with jitter and any provider retry delay, within a 55-second request budget. Each attempt is capped at 25 seconds; the browser waits up to 60 seconds. Long retry delays are returned instead of retried early. Configuration failures and invalid output are not automatically retried. The interface distinguishes busy service, quota, timeout, configuration, and incomplete-response errors. Google availability and quotas still apply.
 
 ## Testing
 
@@ -190,7 +207,7 @@ The application is designed for Vercel:
 2. Use the Vite framework preset.
 3. Use `npm run build` as the build command.
 4. Use `dist` as the output directory.
-5. Deploy without exchange API secrets.
+5. Add `MARKETAUX_API_KEY`, `GEMINI_API_KEY`, and `GEMINI_MODEL=gemini-3.8-flash` as Vercel environment variables if the optional news and AI brief should be enabled.
 
 After deployment, verify that `/api/region` returns the expected country code and that the interface labels the selected Binance spot venue correctly.
 
@@ -212,6 +229,7 @@ The current production deployment is available at [order-book-app-gnu1.vercel.ap
 - Binance Global futures availability depends on the visitor's network even when Binance.US spot is selected.
 - Update frequency reflects real exchange activity; quieter markets may move less often.
 - The market layout and selected editable symbols are not yet persisted between sessions.
+- Marketaux and Gemini are third-party services with independent quotas and availability. The AI brief may be temporarily unavailable when the free endpoint is rate-limited or at capacity.
 
 ## Roadmap
 

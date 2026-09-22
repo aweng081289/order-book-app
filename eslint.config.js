@@ -21,6 +21,15 @@ export default defineConfig([
     },
 
     {
+        files: ['api/**/*.js'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
+
+    {
         ignores: [
             "tailwind.config.js",     // Ignore Tailwind config to fix 'module' error
             "postcss.config.js",      // If you have this

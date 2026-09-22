@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :inert="selectedMarket ? true : undefined" :aria-hidden="selectedMarket ? 'true' : undefined">
     <div
       v-if="connectionIssue"
       class="mb-6 flex flex-col gap-3 rounded-lg border border-red-400/50 bg-red-950/40 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between"
@@ -53,6 +53,7 @@
         :now="now"
         :permanent="index < 2"
         @change-symbol="changeSymbol(index, 'spot', $event)"
+        @view-market="openMarket(book, 'spot', $event)"
       />
     </div>
 
@@ -78,14 +79,25 @@
         :book="book"
         :now="now"
         @change-symbol="changeSymbol(index, 'futures', $event)"
+        @view-market="openMarket(book, 'futures', $event)"
       />
     </div>
   </div>
+
+  <MarketDetailsModal
+    v-if="selectedMarket"
+    :book="selectedMarket.book"
+    :provider="provider"
+    :market-type="selectedMarket.marketType"
+    :spot-region="resolvedSpotRegion"
+    @close="closeMarket"
+  />
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import OrderBookPanel from './OrderBookPanel.vue';
+import MarketDetailsModal from './MarketDetailsModal.vue';
 import { useBinanceOrderBooks } from '@/composables/useBinanceOrderBooks';
 import { useKrakenOrderBooks } from '@/composables/useKrakenOrderBooks';
 import { AVAILABLE_PROVIDERS } from '@/services/marketData/providerConfig';
@@ -136,8 +148,11 @@ const spotVenueLabel = computed(() => {
   if (spotRegion.value === 'detecting') return 'Detecting region';
   return spotRegion.value === 'us' ? 'Binance.US' : 'Binance Global';
 });
+const resolvedSpotRegion = computed(() => spotRegion?.value ?? spotRegion ?? null);
 
 const now = ref(Date.now());
+const selectedMarket = ref(null);
+let marketTrigger = null;
 let clockTimer = null;
 
 onMounted(() => {
@@ -146,7 +161,22 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (clockTimer) clearInterval(clockTimer);
+  document.body.style.overflow = '';
 });
+
+function openMarket(book, marketType) {
+  marketTrigger = document.activeElement;
+  selectedMarket.value = { book, marketType };
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMarket() {
+  selectedMarket.value = null;
+  document.body.style.overflow = '';
+  const trigger = marketTrigger;
+  marketTrigger = null;
+  nextTick(() => trigger?.focus());
+}
 
 function connectionLabel(status) {
   return {

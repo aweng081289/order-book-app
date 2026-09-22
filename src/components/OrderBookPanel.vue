@@ -20,19 +20,19 @@
       <div v-else class="relative mb-1 flex min-h-7 items-baseline justify-center gap-2">
         <button
           type="button"
-          class="group inline-flex min-h-11 items-center gap-1.5 rounded-md uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
-          :class="permanent ? 'cursor-default text-indigo-400' : 'cursor-pointer text-indigo-300 hover:text-indigo-200'"
-          :disabled="permanent"
-          :aria-label="permanent ? `${book.symbol}, fixed market` : `Change ${book.symbol} market`"
-          @click="startEditing"
+          class="inline-flex min-h-11 items-center rounded-md uppercase tracking-wide text-indigo-300 hover:text-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+          :aria-label="`View ${book.symbol} market details`"
+          @click="emit('view-market')"
         >
           <span class="text-xl font-bold">{{ book.symbol }}</span>
-          <span
-            class="text-[10px] font-medium lowercase tracking-normal"
-            :class="permanent ? 'text-gray-400' : 'text-indigo-400 group-hover:text-indigo-300'"
-          >
-            {{ permanent ? 'fixed' : 'change' }}
-          </span>
+        </button>
+        <span v-if="permanent" class="text-[10px] font-medium lowercase tracking-normal text-gray-400">fixed</span>
+        <button
+          v-else type="button"
+          class="min-h-11 rounded-md px-1 text-[10px] font-medium lowercase tracking-normal text-indigo-400 hover:text-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-300"
+          :aria-label="`Change ${book.symbol} market`" @click="startEditing"
+        >
+          change
         </button>
         <span
           v-if="book.priceChangePercent !== null"
@@ -113,7 +113,7 @@ const props = defineProps({
   now: { type: Number, required: true },
   permanent: { type: Boolean, default: false }
 });
-const emit = defineEmits(['change-symbol']);
+const emit = defineEmits(['change-symbol', 'view-market']);
 
 const editing = ref(false);
 const editSymbol = ref('');

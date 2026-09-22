@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/market-insights.js": {
+      "maxDuration": 60
+    }
+  }
+}
