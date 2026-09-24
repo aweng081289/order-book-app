@@ -6,7 +6,36 @@ This file records meaningful changes made while restoring and modernizing the pr
 
 This repository restores and modernizes an earlier personal project created to monitor many cryptocurrency trading pairs in one place. The original dashboard replaced the inefficient process of checking 30 to 50 open-order markets individually in an exchange application. The restoration preserves that original purpose while improving the architecture, market-data integrations, reliability, documentation, and presentation for a professional portfolio.
 
-## Unreleased
+## 1.1.0 - 2026-09-24
+
+### Gemini error handling and production deployment - 2026-09-24
+
+- Added explicit Gemini provider metadata to failed market-brief responses so the interface can distinguish confirmed provider failures from local integration errors.
+- Added a dedicated `503 UNAVAILABLE` state explaining that the request reached Gemini but the free-tier model was temporarily overloaded.
+- Added a dedicated `429 RATE_LIMITED` state explaining that Gemini's rate limit or usage quota was reached.
+- Added provider and status details plus a retry action to the AI brief error panel.
+- Disclosed in the interface that the AI brief is a portfolio demonstration using Gemini's free API tier and that availability and rate limits may vary.
+- Added automated coverage for overload, rate-limit, and free-tier disclosure states; all 42 tests, ESLint, and the production build passed.
+- Added `MARKETAUX_API_KEY`, `GEMINI_API_KEY`, and `GEMINI_MODEL` as hidden Vercel Production environment variables.
+- Deployed the updated application to [order-book-app-gnu1.vercel.app](https://order-book-app-gnu1.vercel.app/) and verified the application shell and Marketaux endpoint return HTTP 200.
+- Verified the production Gemini endpoint reaches the provider and presents the expected structured `503 UNAVAILABLE` overload response when Gemini cannot serve the request.
+
+### Market details and Gemini briefs - 2026-09-22
+
+- Added clickable market symbols that open a detail dialog while retaining separate controls for changing editable markets.
+- Added candlestick charts for Binance and Kraken spot and futures markets, with 1-hour, 4-hour, and daily timeframes.
+- Added market metrics covering trend, price range, average movement, spread, and bid-depth share.
+- Added optional Marketaux crypto news through a server-side endpoint, with loading, error, and retry states.
+- Added optional Gemini market briefs grounded in supplied metrics and headlines, with validated structured fields for outlook, summary, signals, risk, and a short witty take.
+- Configured `gemini-3.8-flash` as the default model. The final implementation uses Gemini only; OpenRouter is not required or used as a fallback.
+- Added low reasoning effort for Gemini 3 models, an 8,192-token output budget, and one retry for temporary service errors, rate limits, network failures, and timeouts.
+- Added provider retry-delay handling within a 55-second total budget, 25-second attempt limits, a 60-second browser timeout, and a matching Vercel function duration setting.
+- Added distinct user-facing errors for unavailable service, quota limits, timeouts, configuration problems, and incomplete responses.
+- Added dialog keyboard focus handling, Escape dismissal, focus restoration, and background interaction blocking.
+- Added local Vite middleware for news and insight endpoints, server-only environment configuration examples, and README setup and behavior documentation.
+- Added automated coverage for market metrics, detail-dialog behavior, Gemini retries, response validation, and error display. Tests, lint, and the production build passed during implementation.
+- Live verification still returned Gemini `503 UNAVAILABLE` high-demand errors after retrying. Successful live brief generation remains unverified; the changes do not resolve Google's service availability issue.
+- Saved the initial implementation locally in commit `b1f3e17`; the later error-handling update was committed as `de49552` and deployed to Vercel production on September 24, 2026.
 
 ## 1.0.0 - 2026-09-21
 

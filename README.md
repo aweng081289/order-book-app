@@ -24,7 +24,7 @@ The application uses public market data only. It does not connect to an exchange
 - Region-aware default markets, including `XRPUSD` in place of suspended `XRPBTC` on Binance.US.
 - Live midpoint direction feedback and per-panel data-age indicators.
 - Bounded reconnection, connection timeouts, manual retry, and a user-controlled Kraken fallback.
-- Clickable markets with a floating detail window containing candlesticks, market metrics, crypto news, and an AI-generated market brief.
+- Clickable markets with a floating detail window containing candlesticks, market metrics, crypto news, and an optional Gemini-generated market brief with transparent free-tier limits and graceful provider-error handling.
 - Responsive portfolio introduction and restoration changelog overlay.
 
 ## Technology
@@ -174,7 +174,9 @@ GEMINI_MODEL=gemini-3.8-flash
 
 These values are used only by the local API middleware and serverless functions; do not expose them with Vite's `VITE_` prefix or commit `.env.local`.
 
-The brief uses only Gemini (GEMINI_MODEL defaults to gemini-3.8-flash). Gemini 3 models use low thinking effort with room for reasoning and the final structured response. Temporary service errors, rate limits, network errors, and timeouts are retried once with jitter and any provider retry delay, within a 55-second request budget. Each attempt is capped at 25 seconds; the browser waits up to 60 seconds. Long retry delays are returned instead of retried early. Configuration failures and invalid output are not automatically retried. The interface distinguishes busy service, quota, timeout, configuration, and incomplete-response errors. Google availability and quotas still apply.
+The brief uses only Gemini (`GEMINI_MODEL` defaults to `gemini-3.8-flash`) through free API access for this portfolio demonstration. The interface states that free-tier availability and rate limits may vary. Gemini 3 models use low thinking effort with room for reasoning and the final structured response. Temporary service errors, rate limits, network errors, and timeouts are retried once with jitter and any provider retry delay, within a 55-second request budget. Each attempt is capped at 25 seconds; the browser waits up to 60 seconds. Long retry delays are returned instead of retried early. Configuration failures and invalid output are not automatically retried.
+
+Confirmed provider responses are presented transparently. A Gemini `503 UNAVAILABLE` explains that the integration reached Gemini but the model is temporarily overloaded; a `429 RATE_LIMITED` explains that a rate limit or usage quota was reached. Both states show the provider and status and retain a retry action. Timeouts, configuration problems, connectivity failures, and incomplete model responses use separate messages rather than being described as provider overload.
 
 ## Testing
 
@@ -211,7 +213,7 @@ The application is designed for Vercel:
 
 After deployment, verify that `/api/region` returns the expected country code and that the interface labels the selected Binance spot venue correctly.
 
-The current production deployment is available at [order-book-app-gnu1.vercel.app](https://order-book-app-gnu1.vercel.app/). Its Vite application, production assets, and `/api/region` function were verified after deployment on September 21, 2026.
+The current production deployment is available at [order-book-app-gnu1.vercel.app](https://order-book-app-gnu1.vercel.app/). The application shell and Marketaux news endpoint returned HTTP 200 after the September 24, 2026 deployment. The Gemini endpoint also reached the configured provider and returned the expected structured `503 UNAVAILABLE` response while the free-tier model was overloaded, confirming that the production error state is active.
 
 ## Reliability behavior
 
@@ -229,13 +231,12 @@ The current production deployment is available at [order-book-app-gnu1.vercel.ap
 - Binance Global futures availability depends on the visitor's network even when Binance.US spot is selected.
 - Update frequency reflects real exchange activity; quieter markets may move less often.
 - The market layout and selected editable symbols are not yet persisted between sessions.
-- Marketaux and Gemini are third-party services with independent quotas and availability. The AI brief may be temporarily unavailable when the free endpoint is rate-limited or at capacity.
+- Marketaux and Gemini are third-party services with independent quotas and availability. The AI brief uses Gemini's free API tier and may be temporarily unavailable when the model is rate-limited or at capacity; the interface identifies confirmed `429` and `503` responses and allows the visitor to retry.
 
 ## Roadmap
 
 - Expand automated coverage to WebSocket connection state transitions and recovery behavior.
 - Complete responsive, keyboard, and screen-reader testing.
-- Perform production verification of Vercel regional routing and provider behavior.
 
 ## Restoration history
 
