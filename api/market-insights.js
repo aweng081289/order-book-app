@@ -33,13 +33,19 @@ export default async function handler(request, response) {
       const [status, code, message] = describeError(error);
       response.setHeader('Cache-Control', 'no-store');
       if (error.retryAfterMs) response.setHeader('Retry-After', String(Math.ceil(error.retryAfterMs / 1000)));
-      return response.status(status).json({ error: message, code });
+      return response.status(status).json({
+        error: message,
+        code,
+        provider: 'Gemini',
+        providerStatus: Number.isInteger(error.status) ? error.status : null
+      });
     }
   }
 }
 
 function describeError(error) {
-  if (error.status === 429) return [429, 'RATE_LIMITED', 'Gemini usage limit reached. Please wait before retrying.'];
+  if (error.status === 429) return [429, 'RATE_LIMITED', 'Gemini returned 429 Too Many Requests. Its rate limit or usage quota has been reached. Please wait before retrying.'];
+  if (error.status === 503) return [503, 'UNAVAILABLE', 'The AI integration reached Gemini successfully, but the model returned 503 Service Unavailable because it is temporarily overloaded. Please retry shortly.'];
   if (error.name === 'TimeoutError' || error.status === 504) return [504, 'TIMEOUT', 'Gemini took too long to respond. Please try again shortly.'];
   if (error.status >= 500 || error.name === 'TypeError') return [503, 'UNAVAILABLE', 'Gemini is temporarily busy or unavailable. Please try again shortly.'];
   if ([400, 401, 403, 404].includes(error.status)) return [503, 'CONFIGURATION', 'Gemini configuration needs attention. Check the server model and API key settings.'];

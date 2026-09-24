@@ -28,7 +28,10 @@ vi.mock('@/services/marketDetails', async importOriginal => {
 describe('MarketDetailsModal', () => {
   it('shows the actionable Gemini error returned by the server', async () => {
     loadAiInsight.mockRejectedValueOnce({ response: { data: {
-      code: 'UNAVAILABLE', error: 'Gemini is temporarily busy or unavailable. Please try again shortly.'
+      code: 'UNAVAILABLE',
+      error: 'The AI integration reached Gemini successfully, but the model returned 503 Service Unavailable because it is temporarily overloaded.',
+      provider: 'Gemini',
+      providerStatus: 503
     } } });
     const book = createMarketBook({ symbol: 'BTCUSDT', providerSymbol: 'BTCUSDT' });
     book.lastPrice = '104';
@@ -36,8 +39,28 @@ describe('MarketDetailsModal', () => {
       props: { book, provider: 'binance', marketType: 'spot', spotRegion: 'us' }
     });
     await flushPromises();
-    expect(wrapper.text()).toContain('Gemini is temporarily busy or unavailable.');
+    expect(wrapper.text()).toContain('Gemini is temporarily overloaded');
+    expect(wrapper.text()).toContain('integration reached Gemini successfully');
+    expect(wrapper.text()).toContain('Provider: Gemini · Status: 503 UNAVAILABLE');
     expect(wrapper.text()).toContain('Retry brief');
+    wrapper.unmount();
+  });
+
+  it('shows a distinct Gemini rate-limit error', async () => {
+    loadAiInsight.mockRejectedValueOnce({ response: { data: {
+      code: 'RATE_LIMITED',
+      error: 'Gemini returned 429 Too Many Requests. Its rate limit or usage quota has been reached.',
+      provider: 'Gemini',
+      providerStatus: 429
+    } } });
+    const book = createMarketBook({ symbol: 'BTCUSDT', providerSymbol: 'BTCUSDT' });
+    book.lastPrice = '104';
+    const wrapper = mount(MarketDetailsModal, {
+      props: { book, provider: 'binance', marketType: 'spot', spotRegion: 'us' }
+    });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Gemini rate limit reached');
+    expect(wrapper.text()).toContain('Provider: Gemini · Status: 429 RATE_LIMITED');
     wrapper.unmount();
   });
   it('loads the chart and visible AI brief, and closes with Escape', async () => {
@@ -51,6 +74,8 @@ describe('MarketDetailsModal', () => {
 
     await flushPromises();
     expect(wrapper.text()).toContain('AI Market Brief');
+    expect(wrapper.text()).toContain('Powered by Gemini · Free API tier');
+    expect(wrapper.text()).toContain("Portfolio demonstration using Gemini's free API access");
     expect(wrapper.text()).toContain('Momentum is positive.');
     expect(wrapper.find('svg').exists()).toBe(true);
 

@@ -72,16 +72,21 @@
           <section class="rounded-xl border border-violet-400/25 bg-gradient-to-br from-violet-950/55 to-indigo-950/45 p-5" aria-labelledby="ai-title">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-300">Powered by Gemini</p>
+                <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-300">Powered by Gemini · Free API tier</p>
                 <h3 id="ai-title" class="mt-1 text-lg font-bold text-white">✦ AI Market Brief</h3>
+                <p class="mt-1 text-xs text-gray-400">Portfolio demonstration using Gemini's free API access; availability and rate limits may vary.</p>
               </div>
               <span v-if="insight" class="rounded-full border px-2 py-1 text-[10px] font-bold uppercase" :class="outlookClass">
                 {{ insight.outlook }}
               </span>
             </div>
             <div v-if="loadingInsight" class="py-10 text-center text-sm text-violet-200" role="status">AI is reading the market…</div>
-            <div v-else-if="insightError" class="py-8 text-center text-sm text-gray-300">
-              <p>{{ insightError }}</p>
+            <div v-else-if="insightError" class="py-8 text-center text-sm text-gray-300" role="alert">
+              <p class="font-semibold text-white">{{ insightError.title }}</p>
+              <p class="mx-auto mt-2 max-w-xl leading-6">{{ insightError.message }}</p>
+              <p v-if="insightError.providerStatus" class="mt-3 text-xs font-semibold uppercase tracking-wider text-violet-300">
+                Provider: {{ insightError.provider }} · Status: {{ insightError.providerStatus }} {{ insightError.code }}
+              </p>
               <button type="button" class="retry-button mt-3" :disabled="!candles.length" @click="loadInsight">Retry brief</button>
             </div>
             <div v-else-if="insight" class="mt-4 space-y-4 text-sm leading-6 text-gray-200">
@@ -171,7 +176,7 @@ async function loadCandles() {
     if (!candles.value.length) throw new Error('No candle data');
   } catch {
     candleError.value = 'Chart data is temporarily unavailable.';
-    insightError.value = 'The AI brief needs candle data before it can run.';
+    insightError.value = { title: 'AI market brief unavailable', message: 'The AI brief needs candle data before it can run.' };
   } finally { loadingCandles.value = false; }
 }
 async function loadNews() {
@@ -182,14 +187,25 @@ async function loadNews() {
 }
 async function loadInsight() {
   if (!candles.value.length || loadingInsight.value) return;
-  loadingInsight.value = true; insightError.value = '';
+  loadingInsight.value = true; insightError.value = null;
   try {
     const data = await loadAiInsight({ symbol: props.book.symbol, marketType: props.marketType, timeframe: timeframe.value, metrics: metrics.value, headlines: articles.value.map(article => article.title) });
     insight.value = data.insight;
   } catch (error) {
-    insightError.value = error.response?.data?.code
-      ? error.response.data.error
-      : 'The market brief request failed. Please try again shortly.';
+    const failure = error.response?.data;
+    insightError.value = failure?.code
+      ? {
+          title: failure.code === 'RATE_LIMITED'
+            ? 'Gemini rate limit reached'
+            : failure.code === 'UNAVAILABLE' && failure.providerStatus === 503
+              ? 'Gemini is temporarily overloaded'
+              : 'AI market brief unavailable',
+          message: failure.error,
+          provider: failure.provider,
+          providerStatus: failure.providerStatus,
+          code: failure.code
+        }
+      : { title: 'AI market brief unavailable', message: 'The market brief request failed. Please try again shortly.' };
   }
   finally { loadingInsight.value = false; }
 }

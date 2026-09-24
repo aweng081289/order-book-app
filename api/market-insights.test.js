@@ -56,7 +56,19 @@ describe('Gemini market briefs', () => {
     const response = await run();
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(response.setHeader).toHaveBeenCalledWith('Retry-After', '120');
-    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'RATE_LIMITED' }));
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'RATE_LIMITED', provider: 'Gemini', providerStatus: 429
+    }));
+  });
+
+  it('identifies a confirmed Gemini 503 as provider overload', async () => {
+    fetch.mockResolvedValueOnce(failure(503, '120'));
+    const response = await run();
+    expect(response.status).toHaveBeenCalledWith(503);
+    expect(response.json).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'UNAVAILABLE', provider: 'Gemini', providerStatus: 503,
+      error: expect.stringContaining('integration reached Gemini successfully')
+    }));
   });
 
   it('stops after two timeouts with a useful error', async () => {
